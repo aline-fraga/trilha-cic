@@ -1,0 +1,27 @@
+<article class="trilha-card" [class.trilha-card--expanded]="isExpanded">
+  <button
+    type="button"
+    class="trilha-card__trigger"
+    (click)="toggleDisciplinas()"
+    [attr.aria-expanded]="isExpanded"
+  >
+    <div class="trilha-card__content">
+      <h2>{{ trilha.nome }}</h2>
+      <p>{{ trilha.resumo }}</p>
+    </div>
+
+    <span class="trilha-card__icon" aria-hidden="true">
+      {{ isExpanded ? '−' : '+' }}
+    </span>
+  </button>
+
+  <section class="trilha-card__disciplinas" *ngIf="isExpanded">
+    <h3>Disciplinas</h3>
+    <div class="trilha-card__disciplinas-grid">
+      <app-disciplina-card
+        *ngFor="let disciplina of trilha.disciplinas"
+        [disciplina]="disciplina"
+      ></app-disciplina-card>
+    </div>
+  </section>
+</article>
