@@ -1,0 +1,30 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar__brand">
+      <span class="topbar__title">TilhaCiC</span>
+      <span class="topbar__subtitle">Portal de trilhas do curso</span>
+    </div>
+
+    <div class="topbar__student">
+      <span class="topbar__student-label">Aluno logado</span>
+      <strong>{{ aluno.nome }}</strong>
+      <span>Matrícula {{ aluno.matricula }}</span>
+    </div>
+  </header>
+
+  <nav class="tabs-nav" aria-label="Casos de uso">
+    <a
+      *ngFor="let item of navigationItems"
+      [routerLink]="item.route"
+      routerLinkActive="tabs-nav__link--active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="tabs-nav__link"
+    >
+      {{ item.label }}
+    </a>
+  </nav>
+
+  <main class="app-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

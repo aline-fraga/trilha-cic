@@ -220,3 +220,6 @@ __marimo__/
 # TrilhaCiC — local SQLite database
 *.db
 *.db-journal
+
+# Frontend
+front-end/node_modules/
