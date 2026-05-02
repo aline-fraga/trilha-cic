@@ -1,0 +1,134 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #0e2a54, #143d76);
+  color: #f8fbff;
+  box-shadow: 0 14px 28px rgba(14, 32, 58, 0.16);
+}
+
+.topbar__brand,
+.topbar__student {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topbar__title {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.topbar__subtitle,
+.topbar__student-label,
+.topbar__student span {
+  color: rgba(248, 251, 255, 0.8);
+  font-size: 0.92rem;
+}
+
+.tabs-nav {
+  position: sticky;
+  top: 92px;
+  z-index: 25;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 24px 12px;
+  max-width: 1168px;
+  margin: 0 auto 8px;
+  border-bottom: 1px solid rgba(20, 61, 118, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(247, 249, 252, 0.96),
+    rgba(238, 243, 248, 0.92)
+  );
+  backdrop-filter: blur(8px);
+}
+
+.tabs-nav__link {
+  position: relative;
+  padding: 14px 18px;
+  border: 1px solid transparent;
+  border-radius: 16px 16px 0 0;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--primary-dark);
+  text-decoration: none;
+  font-weight: 600;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+.tabs-nav__link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 61, 118, 0.16);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 18px rgba(17, 36, 64, 0.08);
+}
+
+.tabs-nav__link--active {
+  background: #ffffff;
+  border-color: rgba(20, 61, 118, 0.14);
+  color: var(--primary-blue);
+  box-shadow: 0 12px 24px rgba(17, 36, 64, 0.1);
+}
+
+.tabs-nav__link--active::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 4px;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, #143d76, #356cb4);
+}
+
+.app-content {
+  padding-bottom: 48px;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    position: static;
+  }
+
+  .tabs-nav {
+    position: static;
+    padding: 14px 16px 0;
+    border-bottom: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .tabs-nav__link {
+    border-radius: 14px;
+  }
+
+  .tabs-nav__link--active::after {
+    left: 10px;
+    right: 10px;
+    bottom: 6px;
+    border-radius: 999px;
+  }
+}
