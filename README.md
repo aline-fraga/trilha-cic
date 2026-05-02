@@ -29,6 +29,14 @@ Inicie o servidor de desenvolvimento:
 npm start
 ```
 
+O frontend está configurado para encaminhar as requisições da rota `trilhas/get`
+para um backend local em `http://localhost:8080` por meio de proxy do Angular.
+Se o seu backend usar outra porta, ajuste o arquivo:
+
+```text
+front-end/proxy.conf.json
+```
+
 Depois, abra no navegador:
 
 ```text
