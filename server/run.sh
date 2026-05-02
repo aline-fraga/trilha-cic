@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 MODE="${1:-}"
 
 usage() {
   cat <<EOF
-Uso: ./run.sh <modo>
+Uso: ./server/run.sh <modo>
 
 Modos:
   new        Apaga e recria o banco (tabelas vazias) antes de subir o servidor
@@ -15,15 +15,15 @@ Modos:
   existing   Sobe o servidor usando o banco existente
 
 Exemplos:
-  ./run.sh new        # começa do zero (banco vazio)
-  ./run.sh demo       # banco populado a partir de data/*.csv
-  ./run.sh existing   # mantém dados de runs anteriores
+  ./server/run.sh new        # começa do zero (banco vazio)
+  ./server/run.sh demo       # banco populado a partir de data/*.csv
+  ./server/run.sh existing   # mantém dados de runs anteriores
 EOF
 }
 
 if [ ! -d .venv ]; then
   echo "Erro: ambiente virtual não encontrado em ./.venv"
-  echo "Crie com: python3 -m venv .venv && .venv/bin/pip install -r server/requirements.txt"
+  echo "Rode primeiro: ./server/setup.sh"
   exit 1
 fi
 
@@ -47,7 +47,7 @@ case "$MODE" in
   existing)
     if [ ! -f server/trilha-cic.db ]; then
       echo "Erro: server/trilha-cic.db não existe."
-      echo "Rode primeiro: ./run.sh new"
+      echo "Rode primeiro: ./server/run.sh new"
       exit 1
     fi
     echo "==> Usando banco existente em server/trilha-cic.db"

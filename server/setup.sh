@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "Erro: python3 não encontrado."
@@ -26,6 +26,6 @@ echo "==> Instalando dependências de server/requirements.txt..."
 
 echo
 echo "Setup concluído. Próximos passos:"
-echo "  ./run.sh demo       # banco populado a partir de data/*.csv + servidor"
-echo "  ./run.sh new        # banco vazio + servidor"
-echo "  ./run.sh existing   # mantém dados atuais + servidor"
+echo "  ./server/run.sh demo       # banco populado a partir de data/*.csv + servidor"
+echo "  ./server/run.sh new        # banco vazio + servidor"
+echo "  ./server/run.sh existing   # mantém dados atuais + servidor"
