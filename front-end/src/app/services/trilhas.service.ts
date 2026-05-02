@@ -8,7 +8,7 @@ import { TRILHAS_MOCK } from '../mocks/trilhas.mock';
   providedIn: 'root'
 })
 export class TrilhasService {
-  private readonly useMockData = true;
+  private readonly useMockData = false;
   private readonly trilhasUrl = 'trilhas/get';
 
   constructor(private readonly http: HttpClient) {}
