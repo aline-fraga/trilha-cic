@@ -1,0 +1,68 @@
+<section class="page-shell">
+  <header class="hero">
+    <div class="hero__top">
+      <img
+        class="hero__logo"
+        src="/logo-inf-ufrgs.png"
+        alt="Logo oficial do Instituto de Informática da UFRGS"
+      />
+      <div>
+        <div class="hero__eyebrow">UFRGS - INSTITUTO DE INFORMÁTICA</div>
+        <h1>Trilhas de aprendizagem</h1>
+      </div>
+    </div>
+    <p>
+      Explore percursos acadêmicos organizados pela COMGRAD do curso e consulte
+      as disciplinas relacionadas a cada trilha.
+    </p>
+  </header>
+
+  <section class="search-panel">
+    <form class="search-form" (ngSubmit)="buscarTrilhas()">
+      <label class="search-form__label" for="disciplina">
+        Pesquisar por disciplina
+      </label>
+      <div class="search-form__controls">
+        <input
+          id="disciplina"
+          name="disciplina"
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Digite o nome da disciplina"
+        />
+        <button type="submit">Buscar</button>
+        <button
+          type="button"
+          class="search-form__secondary"
+          [disabled]="!searchTerm.trim()"
+          (click)="limparBusca()"
+        >
+          Limpar
+        </button>
+      </div>
+    </form>
+
+    <p class="search-panel__hint" *ngIf="ultimaBusca">
+      Resultados para: <strong>{{ ultimaBusca }}</strong>
+    </p>
+  </section>
+
+  <section class="trilhas-grid" *ngIf="trilhas$ | async as trilhas">
+    <ng-container *ngIf="trilhas.length; else semResultados">
+      <app-trilha-card
+        *ngFor="let trilha of trilhas"
+        [trilha]="trilha"
+      ></app-trilha-card>
+    </ng-container>
+  </section>
+
+  <ng-template #semResultados>
+    <section class="empty-state">
+      <h2>Nenhuma trilha encontrada</h2>
+      <p>
+        Ajuste o nome da disciplina pesquisada ou limpe a busca para visualizar
+        todas as trilhas.
+      </p>
+    </section>
+  </ng-template>
+</section>
