@@ -18,36 +18,53 @@
   </header>
 
   <section class="search-panel">
-    <form class="search-form" (ngSubmit)="buscarTrilhas()">
-      <label class="search-form__label" for="disciplina">
-        Pesquisar por disciplina
-      </label>
-      <div class="search-form__controls">
-        <input
-          id="disciplina"
-          name="disciplina"
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Digite o nome da disciplina"
-        />
-        <button type="submit">Buscar</button>
-        <button
-          type="button"
-          class="search-form__secondary"
-          [disabled]="!searchTerm.trim()"
-          (click)="limparBusca()"
+    <div class="search-panel__grid">
+      <form class="search-form" (ngSubmit)="buscarTrilhas()">
+        <label class="search-form__label" for="disciplina">
+          Pesquisar por disciplina
+        </label>
+        <div class="search-form__controls">
+          <input
+            id="disciplina"
+            name="disciplina"
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Digite o nome da disciplina"
+          />
+          <button type="submit">Buscar</button>
+          <button
+            type="button"
+            class="search-form__secondary"
+            [disabled]="!searchTerm.trim()"
+            (click)="limparBusca()"
+          >
+            Limpar
+          </button>
+        </div>
+      </form>
+
+      <div class="sort-panel">
+        <label class="search-form__label" for="ordenacao">
+          Ordenar trilhas por
+        </label>
+        <select
+          id="ordenacao"
+          name="ordenacao"
+          [(ngModel)]="sortOption"
+          (ngModelChange)="ordenarTrilhas()"
         >
-          Limpar
-        </button>
+          <option value="alfabetica">Ordem alfabética</option>
+          <option value="carga-horaria">Carga horária total</option>
+        </select>
       </div>
-    </form>
+    </div>
 
     <p class="search-panel__hint" *ngIf="ultimaBusca">
       Resultados para: <strong>{{ ultimaBusca }}</strong>
     </p>
   </section>
 
-  <section class="trilhas-grid" *ngIf="trilhas$ | async as trilhas">
+  <section class="trilhas-grid">
     <ng-container *ngIf="trilhas.length; else semResultados">
       <app-trilha-card
         *ngFor="let trilha of trilhas"

@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Trilha } from '../../models/trilha';
 import { TrilhasService } from '../../services/trilhas.service';
 
@@ -10,9 +9,11 @@ import { TrilhasService } from '../../services/trilhas.service';
   styleUrl: './trilhas-list.component.css'
 })
 export class TrilhasListComponent implements OnInit {
-  trilhas$!: Observable<Trilha[]>;
+  trilhas: Trilha[] = [];
+  private trilhasRecebidas: Trilha[] = [];
   searchTerm = '';
   ultimaBusca = '';
+  sortOption: 'alfabetica' | 'carga-horaria' = 'alfabetica';
 
   constructor(private readonly trilhasService: TrilhasService) {}
 
@@ -29,7 +30,9 @@ export class TrilhasListComponent implements OnInit {
       return;
     }
 
-    this.trilhas$ = this.trilhasService.searchTrilhasByDisciplina(disciplina);
+    this.trilhasService.searchTrilhasByDisciplina(disciplina).subscribe((trilhas) => {
+      this.atualizarTrilhas(trilhas);
+    });
   }
 
   limparBusca(): void {
@@ -39,6 +42,30 @@ export class TrilhasListComponent implements OnInit {
   }
 
   private carregarTrilhas(): void {
-    this.trilhas$ = this.trilhasService.getTrilhas();
+    this.trilhasService.getTrilhas().subscribe((trilhas) => {
+      this.atualizarTrilhas(trilhas);
+    });
+  }
+
+  ordenarTrilhas(): void {
+    this.trilhas = [...this.trilhasRecebidas].sort((trilhaA, trilhaB) => {
+      if (this.sortOption === 'carga-horaria') {
+        return this.getCargaHorariaTotal(trilhaB) - this.getCargaHorariaTotal(trilhaA);
+      }
+
+      return trilhaA.nome.localeCompare(trilhaB.nome, 'pt-BR');
+    });
+  }
+
+  private atualizarTrilhas(trilhas: Trilha[]): void {
+    this.trilhasRecebidas = trilhas;
+    this.ordenarTrilhas();
+  }
+
+  private getCargaHorariaTotal(trilha: Trilha): number {
+    return trilha.disciplinas.reduce(
+      (total, disciplina) => total + disciplina.carga_horaria,
+      0
+    );
   }
 }
