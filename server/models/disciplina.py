@@ -28,3 +28,6 @@ class Disciplina(Base):
     trilhas: Mapped[List["Trilha"]] = relationship(  # noqa: F821
         secondary="trilha_disciplinas", back_populates="disciplinas"
     )
+    curriculos: Mapped[List["Curriculo"]] = relationship(  # noqa: F821
+        secondary="curriculo_disciplinas", back_populates="disciplinas"
+    )

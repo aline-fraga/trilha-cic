@@ -1,6 +1,6 @@
 from server.models.aluno import Aluno
 from server.models.chamado import Chamado
-from server.models.curriculo import Curriculo
+from server.models.curriculo import Curriculo, curriculo_disciplinas
 from server.models.disciplina import Disciplina
 from server.models.enums import (
     ChamadoStatus,
@@ -20,6 +20,7 @@ __all__ = [
     "ChamadoStatus",
     "ChamadoTipo",
     "Curriculo",
+    "curriculo_disciplinas",
     "Disciplina",
     "DisciplinaTipo",
     "Relatorio",
