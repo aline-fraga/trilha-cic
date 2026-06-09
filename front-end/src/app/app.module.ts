@@ -1,10 +1,12 @@
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { LoginComponent } from './components/login/login.component';
 import { TrilhasListComponent } from './components/trilhas-list/trilhas-list.component';
 import { TrilhaCardComponent } from './components/trilha-card/trilha-card.component';
 import { DisciplinaCardComponent } from './components/disciplina-card/disciplina-card.component';
@@ -13,18 +15,22 @@ import { NotImplementedComponent } from './components/not-implemented/not-implem
 @NgModule({
   declarations: [
     AppComponent,
+    LoginComponent,
     TrilhasListComponent,
     TrilhaCardComponent,
     DisciplinaCardComponent,
-    NotImplementedComponent
+    NotImplementedComponent,
   ],
   imports: [
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
-    AppRoutingModule
+    AppRoutingModule,
   ],
-  providers: [],
-  bootstrap: [AppComponent]
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  ],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
