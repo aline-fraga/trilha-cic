@@ -12,12 +12,22 @@ import { UserInfo } from './models/auth';
 export class AppComponent implements OnInit {
   currentUser: UserInfo | null = null;
 
-  readonly navigationItems = [
-    { label: 'Ver trilhas disponíveis', route: '/trilhas' },
-    { label: 'Solicitar trilhas', route: '/solicitar-trilhas' },
-    { label: 'Sugerir novas trilhas', route: '/sugerir-trilhas' },
-    { label: 'Abrir chamado com a COMGRAD', route: '/chamado-comgrad' },
+  private readonly allNavigationItems = [
+    { label: 'Ver trilhas disponíveis', route: '/trilhas', roles: ['ALUNO', 'COMGRAD', 'ADMIN'] },
+    { label: 'Solicitar trilhas', route: '/solicitar-trilhas', roles: ['ALUNO'] },
+    { label: 'Sugerir novas trilhas', route: '/sugerir-trilhas', roles: ['ALUNO'] },
+    { label: 'Abrir chamado com a COMGRAD', route: '/chamado-comgrad', roles: ['ALUNO'] },
+    { label: 'Gerenciar currículo', route: '/curriculo', roles: ['COMGRAD'] },
+    { label: 'Gerenciar trilhas', route: '/gerenciar-trilhas', roles: ['COMGRAD'] },
+    { label: 'Chamados', route: '/chamados', roles: ['COMGRAD', 'ADMIN'] },
+    { label: 'Relatórios', route: '/relatorios', roles: ['COMGRAD', 'ADMIN'] },
   ];
+
+  get navigationItems() {
+    const role = this.currentUser?.role;
+    if (!role) return [];
+    return this.allNavigationItems.filter(item => item.roles.includes(role));
+  }
 
   constructor(
     readonly authService: AuthService,

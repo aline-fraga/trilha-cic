@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
@@ -8,6 +9,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from server.database import get_db
+from server.models.enums import UserRole
 from server.models.user import User
 from server.repositories.user_repository import UserRepository
 
@@ -63,3 +65,15 @@ def get_current_user(
     if user is None or not user.is_active:
         raise credentials_exception
     return user
+
+
+def require_roles(*roles: UserRole) -> Callable:
+    def dependency(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acesso negado",
+            )
+        return current_user
+
+    return Depends(dependency)
