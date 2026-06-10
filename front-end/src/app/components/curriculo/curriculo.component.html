@@ -1,0 +1,94 @@
+<div class="curriculo">
+  <div class="curriculo__header">
+    <h2>Gestão de Currículo</h2>
+    <button class="btn btn--primary" (click)="abrirCadastro()">+ Nova disciplina</button>
+  </div>
+
+  <p class="erro" *ngIf="erroGeral">{{ erroGeral }}</p>
+
+  <table class="tabela" *ngIf="disciplinas.length > 0">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Tipo</th>
+        <th>Carga Horária</th>
+        <th>Pré-requisitos</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of disciplinas">
+        <td>{{ d.codigo }}</td>
+        <td>{{ d.nome }}</td>
+        <td>{{ d.tipo }}</td>
+        <td>{{ d.carga_horaria }}h</td>
+        <td>{{ d.prerequisitos.length > 0 ? d.prerequisitos.map(p => p.codigo).join(', ') : '—' }}</td>
+        <td class="acoes">
+          <button class="btn btn--secondary" (click)="abrirEdicao(d)">Editar</button>
+          <button class="btn btn--danger" (click)="excluir(d)">Excluir</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="disciplinas.length === 0 && !erroGeral">Nenhuma disciplina cadastrada.</p>
+
+  <div class="overlay" *ngIf="mostrarFormulario" (click)="fecharFormulario()"></div>
+
+  <aside class="painel" *ngIf="mostrarFormulario">
+    <div class="painel__header">
+      <h3>{{ editando ? 'Editar disciplina' : 'Nova disciplina' }}</h3>
+      <button class="btn--fechar" (click)="fecharFormulario()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+      <div class="campo">
+        <label>Nome *</label>
+        <input formControlName="nome" type="text" />
+        <span class="campo__erro" *ngIf="campoInvalido('nome')">Nome é obrigatório</span>
+        <span class="campo__erro" *ngIf="erros['nome']">{{ erros['nome'] }}</span>
+      </div>
+
+      <div class="campo">
+        <label>Código *</label>
+        <input formControlName="codigo" type="text" />
+        <span class="campo__erro" *ngIf="campoInvalido('codigo')">Código é obrigatório</span>
+        <span class="campo__erro" *ngIf="erros['codigo']">{{ erros['codigo'] }}</span>
+      </div>
+
+      <div class="campo">
+        <label>Tipo *</label>
+        <select formControlName="tipo">
+          <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Carga Horária (horas) *</label>
+        <input formControlName="carga_horaria" type="number" min="1" />
+        <span class="campo__erro" *ngIf="campoInvalido('carga_horaria')">Carga horária deve ser maior que zero</span>
+      </div>
+
+      <div class="campo">
+        <label>Link do Plano de Ensino</label>
+        <input formControlName="link_plano_ensino" type="url" />
+      </div>
+
+      <div class="campo">
+        <label>Pré-requisitos</label>
+        <select formControlName="prerequisito_ids" multiple>
+          <option *ngFor="let d of disciplinas" [value]="d.id" [disabled]="editando?.id === d.id">
+            {{ d.codigo }} — {{ d.nome }}
+          </option>
+        </select>
+        <span class="campo__erro" *ngIf="erros['prerequisito_ids']">{{ erros['prerequisito_ids'] }}</span>
+      </div>
+
+      <div class="painel__acoes">
+        <button type="button" class="btn btn--secondary" (click)="fecharFormulario()">Cancelar</button>
+        <button type="submit" class="btn btn--primary">Salvar</button>
+      </div>
+    </form>
+  </aside>
+</div>

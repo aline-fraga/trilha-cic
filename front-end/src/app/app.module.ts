@@ -6,6 +6,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { CurriculoComponent } from './components/curriculo/curriculo.component';
 import { LoginComponent } from './components/login/login.component';
 import { TrilhasListComponent } from './components/trilhas-list/trilhas-list.component';
 import { TrilhaCardComponent } from './components/trilha-card/trilha-card.component';
@@ -15,6 +16,7 @@ import { NotImplementedComponent } from './components/not-implemented/not-implem
 @NgModule({
   declarations: [
     AppComponent,
+    CurriculoComponent,
     LoginComponent,
     TrilhasListComponent,
     TrilhaCardComponent,

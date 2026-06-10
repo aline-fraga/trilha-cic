@@ -1,11 +1,18 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import Boolean, DateTime, Enum, String, func
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Table, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.database import Base
 from server.models.enums import DisciplinaTipo
+
+disciplina_prerequisitos = Table(
+    "disciplina_prerequisitos",
+    Base.metadata,
+    Column("disciplina_id", ForeignKey("disciplinas.id", ondelete="CASCADE"), primary_key=True),
+    Column("prerequisito_id", ForeignKey("disciplinas.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class Disciplina(Base):
@@ -27,4 +34,9 @@ class Disciplina(Base):
 
     trilhas: Mapped[List["Trilha"]] = relationship(  # noqa: F821
         secondary="trilha_disciplinas", back_populates="disciplinas"
+    )
+    prerequisitos: Mapped[List["Disciplina"]] = relationship(
+        secondary=disciplina_prerequisitos,
+        primaryjoin=lambda: Disciplina.id == disciplina_prerequisitos.c.disciplina_id,
+        secondaryjoin=lambda: Disciplina.id == disciplina_prerequisitos.c.prerequisito_id,
     )
