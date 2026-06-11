@@ -1,10 +1,11 @@
 import re
 import unicodedata
 
+from fastapi import HTTPException
 from rapidfuzz import fuzz
 from sqlalchemy.orm import Session
 
-from server.models import Trilha
+from server.models import Disciplina, Trilha
 from server.repositories.disciplina_repository import DisciplinaRepository
 from server.repositories.trilha_repository import TrilhaRepository
 
@@ -50,3 +51,46 @@ class TrilhaService:
         ]
 
         return self.trilha_repo.listar_por_disciplinas_ids(ids_casados)
+
+    def cadastrar(
+        self, nome: str, resumo: str, disciplinas_ids: list[int]
+    ) -> Trilha:
+        disciplinas = self._resolver_disciplinas(disciplinas_ids)
+        return self.trilha_repo.criar(nome=nome, resumo=resumo, disciplinas=disciplinas)
+
+    def editar(
+        self,
+        trilha_id: int,
+        nome: str | None = None,
+        resumo: str | None = None,
+        disciplinas_ids: list[int] | None = None,
+    ) -> Trilha:
+        trilha = self.trilha_repo.obter(trilha_id)
+        if trilha is None:
+            raise HTTPException(status_code=404, detail="Trilha não encontrada")
+        disciplinas = (
+            self._resolver_disciplinas(disciplinas_ids)
+            if disciplinas_ids is not None
+            else None
+        )
+        return self.trilha_repo.atualizar(
+            trilha, nome=nome, resumo=resumo, disciplinas=disciplinas
+        )
+
+    def excluir(self, trilha_id: int) -> None:
+        trilha = self.trilha_repo.obter(trilha_id)
+        if trilha is None:
+            raise HTTPException(status_code=404, detail="Trilha não encontrada")
+        self.trilha_repo.soft_delete(trilha)
+
+    def _resolver_disciplinas(self, ids: list[int]) -> list[Disciplina]:
+        unicos = list(dict.fromkeys(ids))
+        disciplinas = self.disciplina_repo.listar_por_ids_ativas(unicos)
+        if len(disciplinas) != len(unicos):
+            encontrados = {d.id for d in disciplinas}
+            invalidos = [i for i in unicos if i not in encontrados]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Disciplinas inválidas ou inativas: {invalidos}",
+            )
+        return disciplinas
