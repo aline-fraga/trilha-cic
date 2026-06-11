@@ -18,7 +18,7 @@ from server.models import Disciplina, DisciplinaTipo, Trilha, trilha_disciplinas
 from server.models.aluno import Aluno
 from server.models.enums import UserRole
 from server.models.user import User
-from server.services.auth_service import hash_password
+from server.services.auth_service import AuthService
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DISCIPLINAS_CSV = DATA_DIR / "disciplinas.csv"
@@ -61,7 +61,7 @@ def main() -> None:
         for data in USERS_SEED:
             user = User(
                 email=data["email"],
-                password_hash=hash_password(data["password"]),
+                password_hash=AuthService.hash_password(data["password"]),
                 nome=data["nome"],
                 role=data["role"],
                 is_active=True,

@@ -21,50 +21,61 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer()
 
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+class AuthService:
+    def __init__(self, db: Session):
+        self.user_repo = UserRepository(db)
 
+    @staticmethod
+    def hash_password(plain: str) -> str:
+        return pwd_context.hash(plain)
 
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    @staticmethod
+    def verify_password(plain: str, hashed: str) -> bool:
+        return pwd_context.verify(plain, hashed)
 
+    def criar_access_token(self, user_id: int) -> str:
+        expire = datetime.now(UTC) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+        return jwt.encode(
+            {"sub": str(user_id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM
+        )
 
-def create_access_token(user_id: int) -> str:
-    expire = datetime.now(UTC) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    return jwt.encode({"sub": str(user_id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+    def autenticar(self, email: str, password: str) -> User | None:
+        user = self.user_repo.obter_por_email(email)
+        if not user or not user.is_active:
+            return None
+        if not self.verify_password(password, user.password_hash):
+            return None
+        return user
 
+    def obter_usuario_atual(
+        self, credentials: HTTPAuthorizationCredentials
+    ) -> User:
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido ou expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        try:
+            payload = jwt.decode(
+                credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM]
+            )
+            user_id: str | None = payload.get("sub")
+            if user_id is None:
+                raise credentials_exception
+        except JWTError:
+            raise credentials_exception
 
-def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    repo = UserRepository(db)
-    user = repo.get_by_email(email)
-    if not user or not user.is_active:
-        return None
-    if not verify_password(password, user.password_hash):
-        return None
-    return user
+        user = self.user_repo.obter(int(user_id))
+        if user is None or not user.is_active:
+            raise credentials_exception
+        return user
 
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token inválido ou expirado",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str | None = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    user = UserRepository(db).get_by_id(int(user_id))
-    if user is None or not user.is_active:
-        raise credentials_exception
-    return user
+    return AuthService(db).obter_usuario_atual(credentials)
 
 
 def require_roles(*roles: UserRole) -> Callable:
