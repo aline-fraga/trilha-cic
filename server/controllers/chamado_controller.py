@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from server.database import get_db
+from server.models.enums import UserRole
+from server.models.user import User
 from server.schemas.chamado import ChamadoCreate, ChamadoResponse, ChamadoResponder
+from server.services.auth_service import get_current_user, require_roles
 from server.services.chamado_service import ChamadoService
+from server.services.user_service import UserService
 
 
 class ChamadoController:
@@ -16,6 +20,7 @@ class ChamadoController:
             methods=["POST"],
             response_model=ChamadoResponse,
             status_code=201,
+            dependencies=[require_roles(UserRole.ALUNO)],
         )
 
         self.router.add_api_route(
@@ -23,6 +28,7 @@ class ChamadoController:
             self.listar_chamados,
             methods=["GET"],
             response_model=list[ChamadoResponse],
+            dependencies=[Depends(get_current_user)],
         )
 
         self.router.add_api_route(
@@ -30,26 +36,25 @@ class ChamadoController:
             self.responder_chamado,
             methods=["PUT"],
             response_model=ChamadoResponse,
+            dependencies=[require_roles(UserRole.COMGRAD, UserRole.ADMIN)],
         )
 
     def abrir_chamado(
         self,
         dados: ChamadoCreate,
         db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
     ):
         service = ChamadoService(db)
+        user_service = UserService(db)
 
-        aluno_id = 1
+        c = service.criar(dados, current_user.id)
+        aluno = user_service.obter(c.aluno_id)
 
-        # REMOVER COMENTARIO APOS TESTES
-        # return service.criar(dados, aluno_id)
-        
-        # MOCK DATA
-        c = service.criar(dados, aluno_id)
         c_dict = {
             "id": c.id,
             "aluno_id": c.aluno_id,
-            "aluno_nome": "mariana.ercolani@ufrgs.br" if c.aluno_id == 1 else "pedro.kuhn@ufrgs.br",
+            "aluno_nome": aluno.nome if aluno else "Desconhecido",
             "tipo": c.tipo,
             "assunto": c.assunto,
             "mensagem": c.mensagem,
@@ -66,20 +71,27 @@ class ChamadoController:
         self,
         status: str | None = None,
         db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
     ):
         service = ChamadoService(db)
+        user_service = UserService(db)
         
-        # REMOVER COMENTARIO APOS TESTES
-        # return service.listar(status)
-        
-        # MOCK DATA
         chamados_db = service.listar(status)
+        
+        if current_user.role == UserRole.ALUNO:
+            chamados_db = [c for c in chamados_db if c.aluno_id == current_user.id]
+
+        usuarios_cache = {}
         res = []
         for c in chamados_db:
+            if c.aluno_id not in usuarios_cache:
+                usuarios_cache[c.aluno_id] = user_service.obter(c.aluno_id)
+            aluno = usuarios_cache[c.aluno_id]
+
             c_dict = {
                 "id": c.id,
                 "aluno_id": c.aluno_id,
-                "aluno_nome": "mariana.ercolani@ufrgs.br" if c.aluno_id == 1 else "pedro.kuhn@ufrgs.br",
+                "aluno_nome": aluno.nome if aluno else "Desconhecido",
                 "tipo": c.tipo,
                 "assunto": c.assunto,
                 "mensagem": c.mensagem,
@@ -99,18 +111,18 @@ class ChamadoController:
         chamado_id: int,
         dados: ChamadoResponder,
         db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
     ):
         service = ChamadoService(db)
+        user_service = UserService(db)
         
-        # MOCK ADMIN_ID
-        admin_id = 2
-        
-        c = service.atualizar(chamado_id, dados.resposta, admin_id)
+        c = service.atualizar(chamado_id, dados.resposta, current_user.id)
+        aluno = user_service.obter(c.aluno_id)
         
         c_dict = {
             "id": c.id,
             "aluno_id": c.aluno_id,
-            "aluno_nome": "mariana.ercolani@ufrgs.br" if c.aluno_id == 1 else "pedro.kuhn@ufrgs.br",
+            "aluno_nome": aluno.nome if aluno else "Desconhecido",
             "tipo": c.tipo,
             "assunto": c.assunto,
             "mensagem": c.mensagem,

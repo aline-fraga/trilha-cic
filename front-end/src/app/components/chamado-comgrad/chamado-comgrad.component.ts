@@ -40,7 +40,7 @@ export class ChamadoComgradComponent implements OnInit {
     this.isLoading = true;
     this.chamadoService.getChamados().subscribe({
       next: (data) => {
-        this.chamados = data.filter(c => c.aluno_id === 1);
+        this.chamados = data;
         this.isLoading = false;
       },
       error: (err) => {
