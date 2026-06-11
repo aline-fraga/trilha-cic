@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from server.database import get_db
 from server.models.user import User
 from server.schemas.user import LoginRequest, TokenResponse, UserInfo
-from server.services.auth_service import authenticate_user, create_access_token, get_current_user
+from server.services.auth_service import AuthService, get_current_user
 
 
 class AuthController:
@@ -24,13 +24,14 @@ class AuthController:
         )
 
     def login(self, body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
-        user = authenticate_user(db, body.email, body.password)
+        service = AuthService(db)
+        user = service.autenticar(body.email, body.password)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="E-mail ou senha incorretos",
             )
-        return TokenResponse(access_token=create_access_token(user.id))
+        return TokenResponse(access_token=service.criar_access_token(user.id))
 
     def me(self, current_user: User = Depends(get_current_user)) -> UserInfo:
         cartao = current_user.aluno.cartao_ufrgs if current_user.aluno else None
