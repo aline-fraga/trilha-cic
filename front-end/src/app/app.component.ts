@@ -16,6 +16,7 @@ export class AppComponent {
     { label: 'Ver trilhas disponíveis', route: '/trilhas' },
     { label: 'Solicitar trilhas', route: '/solicitar-trilhas' },
     { label: 'Sugerir novas trilhas', route: '/sugerir-trilhas' },
-    { label: 'Abrir chamado com a COMGRAD', route: '/chamado-comgrad' }
+    { label: 'Abrir chamado com a COMGRAD', route: '/chamado-comgrad' },
+    { label: 'Área da COMGRAD', route: '/comgrad/painel' }
   ];
 }

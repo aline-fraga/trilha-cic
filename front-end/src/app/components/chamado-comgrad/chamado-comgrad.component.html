@@ -1,0 +1,129 @@
+<section class="page-shell">
+  <header class="hero">
+    <div class="hero__top">
+      <div>
+        <h1>Meus Chamados (COMGRAD)</h1>
+      </div>
+    </div>
+    <p *ngIf="visaoAtual === 'lista'">
+      Acompanhe o status das suas solicitações ou abra um novo chamado para a comissão de graduação.
+    </p>
+    <p *ngIf="visaoAtual === 'novo'">
+      Utilize este formulário para solicitar trilha personalizada para a comissão de graduação ou para relatar um problema.
+    </p>
+    <p *ngIf="visaoAtual === 'detalhes'">
+      Detalhes da sua solicitação e resposta da COMGRAD.
+    </p>
+  </header>
+
+  <!-- LOADING -->
+  <div *ngIf="isLoading" class="loading-state">
+    Carregando...
+  </div>
+
+  <section class="form-panel" *ngIf="!isLoading && visaoAtual === 'lista'">
+    <div class="list-header">
+      <button 
+        class="btn-primary" 
+        (click)="abrirFormulario()" 
+        [disabled]="!podeAbrirChamado">
+        Novo Chamado
+      </button>
+      <p class="form-hint" *ngIf="!podeAbrirChamado" style="color: var(--primary-dark); margin-top: 8px;">
+        <em>Você já possui um chamado em aberto. Aguarde a resposta antes de abrir outro.</em>
+      </p>
+    </div>
+
+    <div *ngIf="chamados.length === 0" class="empty-state">
+      Você ainda não abriu nenhum chamado.
+    </div>
+
+    <div class="chamados-list" *ngIf="chamados.length > 0">
+      <div class="chamado-card" *ngFor="let c of chamados">
+        <div class="chamado-card__header">
+          <span class="chamado-status" [ngClass]="{'status-aberto': c.status === 'ABERTO', 'status-fechado': c.status === 'FECHADO'}">
+            {{ c.status }}
+          </span>
+          <span class="chamado-date">{{ c.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <h3 class="chamado-title">{{ c.assunto }}</h3>
+        <button class="btn-secondary btn-sm" (click)="verDetalhes(c)">
+          Ver Detalhes
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETALHES -->
+  <section class="form-panel" *ngIf="!isLoading && visaoAtual === 'detalhes' && chamadoSelecionado">
+    <div class="detalhes-header">
+      <span class="chamado-status" [ngClass]="{'status-aberto': chamadoSelecionado.status === 'ABERTO', 'status-fechado': chamadoSelecionado.status === 'FECHADO'}">
+        {{ chamadoSelecionado.status }}
+      </span>
+      <span class="chamado-date">{{ chamadoSelecionado.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+    
+    <h2 class="detalhes-assunto">{{ chamadoSelecionado.assunto }}</h2>
+    
+    <div class="detalhes-box">
+      <h4>Sua Mensagem:</h4>
+      <p>{{ chamadoSelecionado.mensagem }}</p>
+    </div>
+
+    <div class="detalhes-box detalhes-box--resposta" *ngIf="chamadoSelecionado.resposta">
+      <h4>Resposta da COMGRAD:</h4>
+      <p>{{ chamadoSelecionado.resposta }}</p>
+      <small>Respondido em: {{ chamadoSelecionado.respondido_em | date:'dd/MM/yyyy HH:mm' }}</small>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="voltarParaLista()">Voltar</button>
+    </div>
+  </section>
+
+  <!-- NOVO CHAMADO -->
+  <section class="form-panel" *ngIf="!isLoading && visaoAtual === 'novo'">
+    <div *ngIf="successMessage" class="alert alert--success">
+      {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert--error">
+      {{ errorMessage }}
+    </div>
+
+    <form class="chamado-form" (ngSubmit)="submitChamado()" *ngIf="!successMessage">
+      <div class="form-group">
+        <label class="form-label" for="assunto">Título da Solicitação</label>
+        <input
+          id="assunto"
+          name="assunto"
+          type="text"
+          class="form-control"
+          [(ngModel)]="novoChamado.assunto"
+          placeholder="Ex: Análise de disciplinas eletivas para semestre 2026/1"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mensagem">Mensagem / Justificativa</label>
+        <textarea
+          id="mensagem"
+          name="mensagem"
+          class="form-control"
+          [(ngModel)]="novoChamado.mensagem"
+          placeholder="Descreva o contexto da sua solicitação em detalhes..."
+          rows="6"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="voltarParaLista()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Enviando...' : 'Enviar Chamado' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</section>
