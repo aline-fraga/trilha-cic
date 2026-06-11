@@ -38,3 +38,4 @@ class RelatorioItem(Base):
     rejeicoes: Mapped[int] = mapped_column(nullable=False, server_default="0")
 
     relatorio: Mapped[Relatorio] = relationship(back_populates="itens")
+    trilha: Mapped["Trilha"] = relationship()  # noqa: F821
