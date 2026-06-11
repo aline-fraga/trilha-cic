@@ -5,6 +5,7 @@ from server.controllers.auth_controller import AuthController
 from server.controllers.curriculo_controller import CurriculoController
 from server.controllers.relatorio_controller import RelatorioController
 from server.controllers.trilha_controller import TrilhaController
+from server.controllers.user_controller import UserController
 
 app = FastAPI(title="TrilhaCiC API")
 
@@ -18,12 +19,13 @@ app.add_middleware(
 
 trilha_controller = TrilhaController()
 auth_controller = AuthController()
+curriculo_controller = CurriculoController()
+user_controller = UserController()
 
 app.include_router(trilha_controller.router)
 app.include_router(auth_controller.router)
-
-curriculo_controller = CurriculoController()
 app.include_router(curriculo_controller.router)
 
 relatorio_controller = RelatorioController()
 app.include_router(relatorio_controller.router)
+app.include_router(user_controller.router)
