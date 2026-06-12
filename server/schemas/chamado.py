@@ -12,6 +12,18 @@ class ChamadoCreate(BaseModel):
 class ChamadoResponder(BaseModel):
     resposta: str
 
+
+class ChamadoEditMensagem(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "mensagem": "Atualização: anexei meu histórico corrigido."
+            }
+        }
+    )
+
+    mensagem: str
+
 class ChamadoResponse(ChamadoCreate):
     model_config = ConfigDict(from_attributes=True)
 

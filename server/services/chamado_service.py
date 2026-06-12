@@ -57,3 +57,26 @@ class ChamadoService:
         chamado.respondido_por_id = respondido_por_id
 
         return self.chamado_repo.salvar(chamado)
+
+    def editar_mensagem(self, id: int, aluno_id: int, nova_mensagem: str):
+        chamado = self.buscar(id)
+
+        if chamado.aluno_id != aluno_id:
+            raise HTTPException(status_code=403, detail="Acesso negado")
+
+        if chamado.status != ChamadoStatus.ABERTO:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Apenas chamados em ABERTO podem ter a mensagem editada — "
+                    f"status atual: {chamado.status.value}."
+                ),
+            )
+
+        if not nova_mensagem.strip():
+            raise HTTPException(
+                status_code=400, detail="A mensagem não pode estar em branco."
+            )
+
+        chamado.mensagem = nova_mensagem
+        return self.chamado_repo.salvar(chamado)

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from server.schemas.chamado import ChamadoResponse
 from server.schemas.disciplina import DisciplinaResumo
 
 
@@ -28,7 +29,24 @@ class SugestaoTrilhaResponse(BaseModel):
                 "nome_proposto": "Computação Quântica Aplicada",
                 "aluno_id": 3,
                 "aluno_nome": "Aline Fraga",
-                "chamado_id": 15,
+                "chamado": {
+                    "id": 15,
+                    "aluno_id": 3,
+                    "aluno_nome": "Aline Fraga",
+                    "tipo": "NOVA_TRILHA",
+                    "assunto": "Nova trilha: Computação Quântica Aplicada",
+                    "mensagem": (
+                        "Sugestão de nova trilha proposta pelo aluno: "
+                        "'Computação Quântica Aplicada'. Disciplinas "
+                        "selecionadas (1): Algoritmos e Estruturas de Dados."
+                    ),
+                    "status": "ABERTO",
+                    "resposta": None,
+                    "respondido_em": None,
+                    "trilha_id": None,
+                    "created_at": "2026-06-12T15:30:00",
+                    "updated_at": "2026-06-12T15:30:00",
+                },
                 "disciplinas": [
                     {
                         "id": 12,
@@ -48,6 +66,6 @@ class SugestaoTrilhaResponse(BaseModel):
     nome_proposto: str
     aluno_id: int
     aluno_nome: str
-    chamado_id: int
+    chamado: ChamadoResponse
     disciplinas: list[DisciplinaResumo]
     created_at: datetime

@@ -11,6 +11,7 @@ from server.schemas.responses import (
     NOT_FOUND_404,
     UNAUTHORIZED_401,
 )
+from server.schemas.chamado import ChamadoResponse
 from server.schemas.sugestao_trilha import (
     SugestaoTrilhaCreate,
     SugestaoTrilhaResponse,
@@ -141,12 +142,28 @@ class SugestaoTrilhaController:
             aluno = cache[sugestao.aluno_id]
         else:
             aluno = user_service.obter(sugestao.aluno_id)
+        nome_aluno = aluno.nome if aluno else "Desconhecido"
+        chamado_db = sugestao.chamado
+        chamado_response = ChamadoResponse(
+            id=chamado_db.id,
+            aluno_id=chamado_db.aluno_id,
+            aluno_nome=nome_aluno,
+            tipo=chamado_db.tipo,
+            assunto=chamado_db.assunto,
+            mensagem=chamado_db.mensagem,
+            status=chamado_db.status,
+            resposta=chamado_db.resposta,
+            respondido_em=chamado_db.respondido_em,
+            trilha_id=chamado_db.trilha_id,
+            created_at=chamado_db.created_at,
+            updated_at=chamado_db.updated_at,
+        )
         return SugestaoTrilhaResponse(
             id=sugestao.id,
             nome_proposto=sugestao.nome_proposto,
             aluno_id=sugestao.aluno_id,
-            aluno_nome=aluno.nome if aluno else "Desconhecido",
-            chamado_id=sugestao.chamado_id,
+            aluno_nome=nome_aluno,
+            chamado=chamado_response,
             disciplinas=sugestao.disciplinas,
             created_at=sugestao.created_at,
         )
