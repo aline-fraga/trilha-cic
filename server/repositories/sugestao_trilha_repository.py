@@ -11,7 +11,10 @@ class SugestaoTrilhaRepository:
     def listar(self, aluno_id: int | None = None) -> list[SugestaoTrilha]:
         stmt = (
             select(SugestaoTrilha)
-            .options(selectinload(SugestaoTrilha.disciplinas))
+            .options(
+                selectinload(SugestaoTrilha.disciplinas),
+                selectinload(SugestaoTrilha.chamado),
+            )
             .order_by(SugestaoTrilha.created_at.desc())
         )
         if aluno_id is not None:
@@ -22,7 +25,10 @@ class SugestaoTrilhaRepository:
         stmt = (
             select(SugestaoTrilha)
             .where(SugestaoTrilha.id == sugestao_id)
-            .options(selectinload(SugestaoTrilha.disciplinas))
+            .options(
+                selectinload(SugestaoTrilha.disciplinas),
+                selectinload(SugestaoTrilha.chamado),
+            )
         )
         return self.db.scalars(stmt).one_or_none()
 

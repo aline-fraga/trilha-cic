@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from server.database import get_db
 from server.models.enums import UserRole
 from server.models.user import User
-from server.schemas.chamado import ChamadoCreate, ChamadoResponse, ChamadoResponder
+from server.schemas.chamado import (
+    ChamadoCreate,
+    ChamadoEditMensagem,
+    ChamadoResponder,
+    ChamadoResponse,
+)
 from server.schemas.responses import (
     BAD_REQUEST_400,
     FORBIDDEN_403,
@@ -62,6 +67,33 @@ class ChamadoController:
                 "- `tipo`: `TRILHA_REJEITADA` ou `NOVA_TRILHA`."
             ),
             responses={401: UNAUTHORIZED_401},
+        )
+
+        self.router.add_api_route(
+            "/{chamado_id}",
+            self.editar_mensagem_chamado,
+            methods=["PATCH"],
+            response_model=ChamadoResponse,
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Editar mensagem do chamado (ALUNO)",
+            description=(
+                "Permite ao aluno **dono** do chamado atualizar a `mensagem` "
+                "enquanto o chamado ainda estiver `ABERTO`.\n\n"
+                "**Regras:**\n"
+                "- Apenas o aluno que abriu o chamado pode editar (403 caso "
+                "contrário).\n"
+                "- Só é possível editar com `status = ABERTO`. Chamado já "
+                "respondido/`FECHADO` retorna 400.\n"
+                "- `mensagem` não pode ser vazia (após `strip`).\n\n"
+                "Demais campos (`tipo`, `assunto`, `status`, etc.) são "
+                "imutáveis por esta rota."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+                404: NOT_FOUND_404,
+            },
         )
 
         self.router.add_api_route(
@@ -150,6 +182,35 @@ class ChamadoController:
             res.append(ChamadoResponse(**c_dict))
             
         return res
+
+    def editar_mensagem_chamado(
+        self,
+        chamado_id: int,
+        dados: ChamadoEditMensagem,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = ChamadoService(db)
+        user_service = UserService(db)
+
+        c = service.editar_mensagem(chamado_id, current_user.id, dados.mensagem)
+        aluno = user_service.obter(c.aluno_id)
+
+        c_dict = {
+            "id": c.id,
+            "aluno_id": c.aluno_id,
+            "aluno_nome": aluno.nome if aluno else "Desconhecido",
+            "tipo": c.tipo,
+            "assunto": c.assunto,
+            "mensagem": c.mensagem,
+            "status": c.status,
+            "resposta": c.resposta,
+            "respondido_em": c.respondido_em,
+            "trilha_id": c.trilha_id,
+            "created_at": c.created_at,
+            "updated_at": c.updated_at,
+        }
+        return ChamadoResponse(**c_dict)
 
     def responder_chamado(
         self,
