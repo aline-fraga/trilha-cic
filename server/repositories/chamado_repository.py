@@ -16,10 +16,14 @@ class ChamadoRepository:
         self.db.refresh(chamado)
         return chamado
 
-    def listar(self, status: str | None = None) -> list[Chamado]:
+    def listar(
+        self, status: str | None = None, tipo: str | None = None
+    ) -> list[Chamado]:
         stmt = select(Chamado)
         if status is not None:
             stmt = stmt.where(Chamado.status == status)
+        if tipo is not None:
+            stmt = stmt.where(Chamado.tipo == tipo)
         stmt = stmt.order_by(Chamado.created_at.desc())
         return list(self.db.scalars(stmt))
 

@@ -11,8 +11,10 @@ class ChamadoService:
     def __init__(self, db: Session):
         self.chamado_repo = ChamadoRepository(db)
 
-    def listar(self, status: str | None = None) -> list[Chamado]:
-        return self.chamado_repo.listar(status)
+    def listar(
+        self, status: str | None = None, tipo: str | None = None
+    ) -> list[Chamado]:
+        return self.chamado_repo.listar(status=status, tipo=tipo)
 
     def buscar(self, id: int) -> Chamado | None:
         chamado = self.chamado_repo.buscar(id)
