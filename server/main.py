@@ -5,6 +5,7 @@ from server.controllers.auth_controller import AuthController
 from server.controllers.chamado_controller import ChamadoController
 from server.controllers.curriculo_controller import CurriculoController
 from server.controllers.relatorio_controller import RelatorioController
+from server.controllers.solicitacao_controller import SolicitacaoController
 from server.controllers.sugestao_trilha_controller import SugestaoTrilhaController
 from server.controllers.trilha_controller import TrilhaController
 from server.controllers.user_controller import UserController
@@ -41,6 +42,13 @@ TAGS_METADATA = [
         "description": (
             "Sugestões de novas trilhas propostas por alunos (UC13). Cada sugestão "
             "abre automaticamente um chamado `NOVA_TRILHA` para a COMGRAD."
+        ),
+    },
+    {
+        "name": "solicitacoes",
+        "description": (
+            "Solicitações de trilha personalizada (UC03/UC04/UC06): listagem, "
+            "aceite e rejeição. Cada aluno pode ter no máximo 1 trilha `ACEITA`."
         ),
     },
 ]
@@ -94,3 +102,6 @@ app.include_router(chamado_controller.router)
 
 sugestao_trilha_controller = SugestaoTrilhaController()
 app.include_router(sugestao_trilha_controller.router)
+
+solicitacao_controller = SolicitacaoController()
+app.include_router(solicitacao_controller.router)

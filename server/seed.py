@@ -9,7 +9,6 @@ Reads:
 """
 
 import csv
-from datetime import datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import delete, select
@@ -28,12 +27,28 @@ TRILHAS_CSV = DATA_DIR / "trilhas.csv"
 
 USERS_SEED = [
     {
-        "email": "aluno@ufrgs.br",
+        "email": "aluno1@ufrgs.br",
         "password": "aluno123",
         "nome": "Lucas Martins",
         "role": UserRole.ALUNO,
-        "cartao_ufrgs": "00333333",
+        "cartao_ufrgs": "00333331",
         "semestre_ingresso": "2023/2",
+    },
+    {
+        "email": "aluno2@ufrgs.br",
+        "password": "aluno123",
+        "nome": "Mariana Burzlaff",
+        "role": UserRole.ALUNO,
+        "cartao_ufrgs": "00333332",
+        "semestre_ingresso": "2024/1",
+    },
+    {
+        "email": "aluno3@ufrgs.br",
+        "password": "aluno123",
+        "nome": "Pedro Diello",
+        "role": UserRole.ALUNO,
+        "cartao_ufrgs": "00333333",
+        "semestre_ingresso": "2024/2",
     },
     {
         "email": "comgrad@ufrgs.br",
@@ -104,28 +119,23 @@ def main() -> None:
 
         db.flush()
 
-        aluno = db.scalar(select(User).where(User.role == UserRole.ALUNO))
-        trilhas_db = list(db.scalars(select(Trilha)))
-        now = datetime.now()
-        SOLICITACOES_SEED = [
-            (SolicitacaoStatus.ACEITA, 5),
-            (SolicitacaoStatus.ACEITA, 15),
-            (SolicitacaoStatus.ACEITA, 40),
-            (SolicitacaoStatus.REJEITADA, 10),
-            (SolicitacaoStatus.REJEITADA, 25),
-            (SolicitacaoStatus.REJEITADA, 50),
-            (SolicitacaoStatus.PENDENTE, None),
-            (SolicitacaoStatus.PENDENTE, None),
-        ]
-        for idx, (status_, dias) in enumerate(SOLICITACOES_SEED):
-            trilha_alvo = trilhas_db[idx % len(trilhas_db)]
-            resolvido_em = None if dias is None else now - timedelta(days=dias)
+        alunos = list(
+            db.scalars(
+                select(User).where(User.role == UserRole.ALUNO).order_by(User.id)
+            )
+        )
+        trilhas_db = list(db.scalars(select(Trilha).order_by(Trilha.id)))
+        total_trilhas = len(trilhas_db)
+        for idx, aluno_user in enumerate(alunos):
+            candidatas = [
+                trilhas_db[idx % total_trilhas],
+                trilhas_db[(idx + 1) % total_trilhas],
+            ]
             db.add(
                 Solicitacao(
-                    aluno_id=aluno.id,
-                    trilha_sugerida_id=trilha_alvo.id,
-                    status=status_,
-                    resolvido_em=resolvido_em,
+                    aluno_id=aluno_user.id,
+                    status=SolicitacaoStatus.PENDENTE,
+                    trilhas_candidatas=candidatas,
                 )
             )
 

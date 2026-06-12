@@ -10,7 +10,7 @@ from server.models.enums import (
     UserRole,
 )
 from server.models.relatorio import Relatorio, RelatorioItem
-from server.models.solicitacao import Solicitacao
+from server.models.solicitacao import Solicitacao, solicitacao_trilhas_candidatas
 from server.models.sugestao_trilha import SugestaoTrilha, sugestao_trilha_disciplinas
 from server.models.trilha import Trilha, trilha_disciplinas
 from server.models.user import User
@@ -27,6 +27,7 @@ __all__ = [
     "Relatorio",
     "RelatorioItem",
     "Solicitacao",
+    "solicitacao_trilhas_candidatas",
     "SolicitacaoStatus",
     "SugestaoTrilha",
     "sugestao_trilha_disciplinas",
