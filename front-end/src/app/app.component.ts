@@ -15,11 +15,10 @@ export class AppComponent implements OnInit {
   private readonly allNavigationItems = [
     { label: 'Ver trilhas disponíveis', route: '/trilhas', roles: ['ALUNO', 'COMGRAD', 'ADMIN'] },
     { label: 'Solicitar trilhas', route: '/solicitar-trilhas', roles: ['ALUNO'] },
-    { label: 'Sugerir novas trilhas', route: '/sugerir-trilhas', roles: ['ALUNO'] },
     { label: 'Abrir chamado com a COMGRAD', route: '/chamado-comgrad', roles: ['ALUNO'] },
     { label: 'Gerenciar currículo', route: '/curriculo', roles: ['COMGRAD'] },
     { label: 'Gerenciar trilhas', route: '/gerenciar-trilhas', roles: ['COMGRAD'] },
-    { label: 'Chamados', route: '/chamados', roles: ['COMGRAD', 'ADMIN'] },
+    { label: 'Chamados', route: '/comgrad/painel', roles: ['COMGRAD', 'ADMIN'] },
     { label: 'Relatórios', route: '/relatorios', roles: ['COMGRAD', 'ADMIN'] },
   ];
 

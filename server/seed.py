@@ -11,14 +11,15 @@ Reads:
 import csv
 from pathlib import Path
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from server.database import SessionLocal
 from server.models import Disciplina, Trilha, trilha_disciplinas
 from server.models.aluno import Aluno
-from server.models.enums import UserRole
+from server.models.enums import SolicitacaoStatus, UserRole
+from server.models.solicitacao import Solicitacao
 from server.models.user import User
-from server.services.auth_service import hash_password
+from server.services.auth_service import AuthService
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DISCIPLINAS_CSV = DATA_DIR / "disciplinas.csv"
@@ -26,12 +27,28 @@ TRILHAS_CSV = DATA_DIR / "trilhas.csv"
 
 USERS_SEED = [
     {
-        "email": "aluno@ufrgs.br",
+        "email": "aluno1@ufrgs.br",
         "password": "aluno123",
         "nome": "Lucas Martins",
         "role": UserRole.ALUNO,
-        "cartao_ufrgs": "00333333",
+        "cartao_ufrgs": "00333331",
         "semestre_ingresso": "2023/2",
+    },
+    {
+        "email": "aluno2@ufrgs.br",
+        "password": "aluno123",
+        "nome": "Mariana Burzlaff",
+        "role": UserRole.ALUNO,
+        "cartao_ufrgs": "00333332",
+        "semestre_ingresso": "2024/1",
+    },
+    {
+        "email": "aluno3@ufrgs.br",
+        "password": "aluno123",
+        "nome": "Pedro Diello",
+        "role": UserRole.ALUNO,
+        "cartao_ufrgs": "00333333",
+        "semestre_ingresso": "2024/2",
     },
     {
         "email": "comgrad@ufrgs.br",
@@ -51,6 +68,7 @@ USERS_SEED = [
 def main() -> None:
     db = SessionLocal()
     try:
+        db.execute(delete(Solicitacao))
         db.execute(delete(trilha_disciplinas))
         db.execute(delete(Trilha))
         db.execute(delete(Disciplina))
@@ -61,7 +79,7 @@ def main() -> None:
         for data in USERS_SEED:
             user = User(
                 email=data["email"],
-                password_hash=hash_password(data["password"]),
+                password_hash=AuthService.hash_password(data["password"]),
                 nome=data["nome"],
                 role=data["role"],
                 is_active=True,
@@ -97,12 +115,35 @@ def main() -> None:
                 )
                 db.add(trilha)
 
+        db.flush()
+
+        alunos = list(
+            db.scalars(
+                select(User).where(User.role == UserRole.ALUNO).order_by(User.id)
+            )
+        )
+        trilhas_db = list(db.scalars(select(Trilha).order_by(Trilha.id)))
+        total_trilhas = len(trilhas_db)
+        for idx, aluno_user in enumerate(alunos):
+            candidatas = [
+                trilhas_db[idx % total_trilhas],
+                trilhas_db[(idx + 1) % total_trilhas],
+            ]
+            db.add(
+                Solicitacao(
+                    aluno_id=aluno_user.id,
+                    status=SolicitacaoStatus.PENDENTE,
+                    trilhas_candidatas=candidatas,
+                )
+            )
+
         db.commit()
 
         print(
             f"Seed concluído: {db.query(User).count()} usuários, "
             f"{db.query(Disciplina).count()} disciplinas, "
-            f"{db.query(Trilha).count()} trilhas"
+            f"{db.query(Trilha).count()} trilhas, "
+            f"{db.query(Solicitacao).count()} solicitações"
         )
         print("Usuários de teste:")
         for data in USERS_SEED:

@@ -12,6 +12,14 @@ class DisciplinaRepository:
         stmt = select(Disciplina).where(Disciplina.is_active.is_(True))
         return list(self.db.scalars(stmt))
 
+    def listar_por_ids_ativas(self, ids: list[int]) -> list[Disciplina]:
+        if not ids:
+            return []
+        stmt = select(Disciplina).where(
+            Disciplina.id.in_(ids), Disciplina.is_active.is_(True)
+        )
+        return list(self.db.scalars(stmt))
+
     def get_by_id(self, disciplina_id: int) -> Disciplina | None:
         stmt = select(Disciplina).where(Disciplina.id == disciplina_id)
         return self.db.scalar(stmt)
