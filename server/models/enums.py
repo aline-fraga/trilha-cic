@@ -7,11 +7,6 @@ class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
 
 
-class DisciplinaTipo(str, enum.Enum):
-    OBRIGATORIA = "OBRIGATORIA"
-    ELETIVA = "ELETIVA"
-
-
 class ChamadoTipo(str, enum.Enum):
     TRILHA_REJEITADA = "TRILHA_REJEITADA"
     NOVA_TRILHA = "NOVA_TRILHA"

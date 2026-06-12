@@ -16,6 +16,12 @@ class DisciplinaController:
     def __init__(self):
         self.router = APIRouter(prefix="/disciplinas", tags=["disciplinas"])
         self.router.add_api_route(
+            "/publico",
+            self.listar_publico,
+            methods=["GET"],
+            response_model=list[DisciplinaResponse],
+        )
+        self.router.add_api_route(
             "",
             self.listar,
             methods=["GET"],
@@ -46,6 +52,12 @@ class DisciplinaController:
             methods=["DELETE"],
             status_code=204,
         )
+
+    def listar_publico(
+        self,
+        db: Session = Depends(get_db),
+    ) -> list[DisciplinaResponse]:
+        return DisciplinaService(db).listar()
 
     def listar(
         self,

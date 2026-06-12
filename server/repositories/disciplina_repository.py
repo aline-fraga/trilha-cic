@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from server.models import Disciplina
 
@@ -8,23 +8,12 @@ class DisciplinaRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def _com_prerequisitos(self):
-        return selectinload(Disciplina.prerequisitos)
-
     def listar_ativas(self) -> list[Disciplina]:
-        stmt = (
-            select(Disciplina)
-            .where(Disciplina.is_active.is_(True))
-            .options(self._com_prerequisitos())
-        )
+        stmt = select(Disciplina).where(Disciplina.is_active.is_(True))
         return list(self.db.scalars(stmt))
 
     def get_by_id(self, disciplina_id: int) -> Disciplina | None:
-        stmt = (
-            select(Disciplina)
-            .where(Disciplina.id == disciplina_id)
-            .options(self._com_prerequisitos())
-        )
+        stmt = select(Disciplina).where(Disciplina.id == disciplina_id)
         return self.db.scalar(stmt)
 
     def get_by_codigo(self, codigo: str) -> Disciplina | None:

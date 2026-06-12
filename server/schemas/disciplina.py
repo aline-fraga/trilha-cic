@@ -1,23 +1,10 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from server.models.enums import DisciplinaTipo
-
-
-class DisciplinaPrerequisito(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    nome: str
-    codigo: str
-
 
 class DisciplinaCreate(BaseModel):
     nome: str
     codigo: str
-    tipo: DisciplinaTipo
     carga_horaria: int
-    link_plano_ensino: str | None = None
-    prerequisito_ids: list[int] = []
 
     @field_validator("nome", "codigo")
     @classmethod
@@ -37,10 +24,7 @@ class DisciplinaCreate(BaseModel):
 class DisciplinaUpdate(BaseModel):
     nome: str | None = None
     codigo: str | None = None
-    tipo: DisciplinaTipo | None = None
     carga_horaria: int | None = None
-    link_plano_ensino: str | None = None
-    prerequisito_ids: list[int] | None = None
 
     @field_validator("nome", "codigo")
     @classmethod
@@ -63,8 +47,5 @@ class DisciplinaResponse(BaseModel):
     id: int
     nome: str
     codigo: str
-    tipo: DisciplinaTipo
     carga_horaria: int
-    link_plano_ensino: str | None = None
     is_active: bool
-    prerequisitos: list[DisciplinaPrerequisito] = []

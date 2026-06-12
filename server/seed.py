@@ -4,7 +4,7 @@ Usage (from `trilha-cic/`):
     .venv/bin/python -m server.seed
 
 Reads:
-    data/disciplinas.csv  (nome, codigo, tipo, carga_horaria, link_plano_ensino)
+    data/disciplinas.csv  (nome, codigo, carga_horaria)
     data/trilhas.csv      (nome, resumo, disciplinas_codigos — codes joined by ';')
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 from sqlalchemy import delete
 
 from server.database import SessionLocal
-from server.models import Disciplina, DisciplinaTipo, Trilha, trilha_disciplinas
+from server.models import Disciplina, Trilha, trilha_disciplinas
 from server.models.aluno import Aluno
 from server.models.enums import UserRole
 from server.models.user import User
@@ -82,9 +82,7 @@ def main() -> None:
                 disciplina = Disciplina(
                     nome=row["nome"],
                     codigo=row["codigo"],
-                    tipo=DisciplinaTipo(row["tipo"]),
                     carga_horaria=int(row["carga_horaria"]),
-                    link_plano_ensino=row["link_plano_ensino"] or None,
                 )
                 disciplinas_por_codigo[row["codigo"]] = disciplina
                 db.add(disciplina)

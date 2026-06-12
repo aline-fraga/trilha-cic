@@ -25,14 +25,10 @@ class DisciplinaService:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={"campo": "codigo", "mensagem": f"Já existe uma disciplina com o código '{data.codigo}'"},
             )
-        prerequisitos = self._resolver_prerequisitos(data.prerequisito_ids)
         disciplina = Disciplina(
             nome=data.nome,
             codigo=data.codigo,
-            tipo=data.tipo,
             carga_horaria=data.carga_horaria,
-            link_plano_ensino=data.link_plano_ensino,
-            prerequisitos=prerequisitos,
         )
         return self.repo.criar(disciplina)
 
@@ -51,30 +47,11 @@ class DisciplinaService:
             disciplina.nome = data.nome
         if data.codigo is not None:
             disciplina.codigo = data.codigo
-        if data.tipo is not None:
-            disciplina.tipo = data.tipo
         if data.carga_horaria is not None:
             disciplina.carga_horaria = data.carga_horaria
-        if data.link_plano_ensino is not None:
-            disciplina.link_plano_ensino = data.link_plano_ensino
-        if data.prerequisito_ids is not None:
-            disciplina.prerequisitos = self._resolver_prerequisitos(data.prerequisito_ids)
 
         return disciplina
 
     def excluir(self, disciplina_id: int) -> None:
         disciplina = self.buscar(disciplina_id)
         self.repo.inativar(disciplina)
-
-    def _resolver_prerequisitos(self, ids: list[int]) -> list[Disciplina]:
-        if not ids:
-            return []
-        disciplinas = self.repo.get_many_by_ids(ids)
-        encontrados = {d.id for d in disciplinas}
-        faltando = set(ids) - encontrados
-        if faltando:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail={"campo": "prerequisito_ids", "mensagem": f"Disciplinas não encontradas: {sorted(faltando)}"},
-            )
-        return disciplinas

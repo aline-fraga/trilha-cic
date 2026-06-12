@@ -1,15 +1,7 @@
 <article class="disciplina-card">
   <div class="disciplina-card__meta">
     <span>{{ disciplina.codigo }}</span>
-    <span>{{ disciplina.tipo }}</span>
   </div>
   <h4>{{ disciplina.nome }}</h4>
   <p>Carga horária: {{ disciplina.carga_horaria }}h</p>
-  <a
-    [href]="disciplina.link_plano_ensino"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    Abrir plano de ensino
-  </a>
 </article>

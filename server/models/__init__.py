@@ -5,7 +5,6 @@ from server.models.disciplina import Disciplina
 from server.models.enums import (
     ChamadoStatus,
     ChamadoTipo,
-    DisciplinaTipo,
     SolicitacaoStatus,
     UserRole,
 )
@@ -21,7 +20,6 @@ __all__ = [
     "ChamadoTipo",
     "Curriculo",
     "Disciplina",
-    "DisciplinaTipo",
     "Relatorio",
     "RelatorioItem",
     "Solicitacao",

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Disciplina, DisciplinaTipo } from '../../models/disciplina';
+import { Disciplina } from '../../models/disciplina';
 import { DisciplinaService } from '../../services/disciplina.service';
 
 @Component({
@@ -17,8 +17,6 @@ export class CurriculoComponent implements OnInit {
   erros: Record<string, string> = {};
   form!: FormGroup;
 
-  readonly tipos: DisciplinaTipo[] = ['OBRIGATORIA', 'ELETIVA'];
-
   constructor(
     private readonly fb: FormBuilder,
     private readonly disciplinaService: DisciplinaService
@@ -33,10 +31,7 @@ export class CurriculoComponent implements OnInit {
     this.form = this.fb.group({
       nome: [disciplina?.nome ?? '', [Validators.required]],
       codigo: [disciplina?.codigo ?? '', [Validators.required]],
-      tipo: [disciplina?.tipo ?? 'ELETIVA', [Validators.required]],
       carga_horaria: [disciplina?.carga_horaria ?? null, [Validators.required, Validators.min(1)]],
-      link_plano_ensino: [disciplina?.link_plano_ensino ?? ''],
-      prerequisito_ids: [disciplina?.prerequisitos.map((p) => p.id) ?? []],
     });
     this.erros = {};
     this.erroGeral = '';
@@ -75,11 +70,7 @@ export class CurriculoComponent implements OnInit {
     this.erroGeral = '';
 
     const valor = this.form.value;
-    const body = {
-      ...valor,
-      link_plano_ensino: valor.link_plano_ensino || undefined,
-      prerequisito_ids: valor.prerequisito_ids ?? [],
-    };
+    const body = { ...valor };
 
     const request$ = this.editando
       ? this.disciplinaService.atualizar(this.editando.id, body)
