@@ -3,16 +3,28 @@
 }
 
 .curriculo__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: 15% 1fr 15% 20%;
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0;
+}
+
+.curriculo__header h2 {
+  grid-column: 1 / -1;
+  margin-bottom: 0.4rem;
+}
+
+.curriculo__header button {
+  grid-column: 4;
+  justify-self: start;
 }
 
 .tabela {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  table-layout: fixed;
 }
 
 .tabela th,
@@ -21,6 +33,15 @@
   border-bottom: 1px solid #e0e0e0;
   text-align: left;
 }
+
+.tabela th:nth-child(1),
+.tabela td:nth-child(1) { width: 15%; }
+
+.tabela th:nth-child(3),
+.tabela td:nth-child(3) { width: 15%; }
+
+.tabela th:nth-child(4),
+.tabela td:nth-child(4) { width: 20%; }
 
 .tabela th {
   background: #f5f5f5;
