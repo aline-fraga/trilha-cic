@@ -31,3 +31,6 @@ class Disciplina(Base):
     curriculos: Mapped[List["Curriculo"]] = relationship(  # noqa: F821
         secondary="curriculo_disciplinas", back_populates="disciplinas"
     )
+    sugestoes_trilha: Mapped[List["SugestaoTrilha"]] = relationship(  # noqa: F821
+        secondary="sugestao_trilha_disciplinas", back_populates="disciplinas"
+    )

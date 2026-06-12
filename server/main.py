@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.controllers.auth_controller import AuthController
+from server.controllers.chamado_controller import ChamadoController
 from server.controllers.curriculo_controller import CurriculoController
 from server.controllers.relatorio_controller import RelatorioController
+from server.controllers.sugestao_trilha_controller import SugestaoTrilhaController
 from server.controllers.trilha_controller import TrilhaController
-from server.controllers.chamado_controller import ChamadoController
 from server.controllers.user_controller import UserController
 
 TAGS_METADATA = [
@@ -33,6 +34,13 @@ TAGS_METADATA = [
         "description": (
             "Relatórios de demanda de trilhas (aceites/rejeições por período). "
             "**Acesso exclusivo do papel COMGRAD.**"
+        ),
+    },
+    {
+        "name": "sugestoes-trilha",
+        "description": (
+            "Sugestões de novas trilhas propostas por alunos (UC13). Cada sugestão "
+            "abre automaticamente um chamado `NOVA_TRILHA` para a COMGRAD."
         ),
     },
 ]
@@ -83,3 +91,6 @@ app.include_router(user_controller.router)
 
 chamado_controller = ChamadoController()
 app.include_router(chamado_controller.router)
+
+sugestao_trilha_controller = SugestaoTrilhaController()
+app.include_router(sugestao_trilha_controller.router)
