@@ -5,6 +5,12 @@ from server.database import get_db
 from server.models.enums import UserRole
 from server.models.user import User
 from server.schemas.chamado import ChamadoCreate, ChamadoResponse, ChamadoResponder
+from server.schemas.responses import (
+    BAD_REQUEST_400,
+    FORBIDDEN_403,
+    NOT_FOUND_404,
+    UNAUTHORIZED_401,
+)
 from server.services.auth_service import get_current_user, require_roles
 from server.services.chamado_service import ChamadoService
 from server.services.user_service import UserService
@@ -21,6 +27,21 @@ class ChamadoController:
             response_model=ChamadoResponse,
             status_code=201,
             dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Abrir novo chamado (ALUNO)",
+            description=(
+                "Registra um chamado em nome do aluno autenticado, com status "
+                "inicial `ABERTO`.\n\n"
+                "**Regras:**\n"
+                "- O aluno só pode ter **um chamado em aberto por tipo** "
+                "(`TRILHA_REJEITADA` ou `NOVA_TRILHA`); tentar abrir um segundo "
+                "do mesmo tipo retorna 400.\n"
+                "- `mensagem` não pode ser vazia (após `strip`)."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+            },
         )
 
         self.router.add_api_route(
@@ -29,6 +50,18 @@ class ChamadoController:
             methods=["GET"],
             response_model=list[ChamadoResponse],
             dependencies=[Depends(get_current_user)],
+            summary="Listar chamados",
+            description=(
+                "Retorna os chamados ordenados por data de criação decrescente.\n\n"
+                "**Visibilidade por papel:**\n"
+                "- `ALUNO` — vê apenas os próprios chamados (filtro implícito por "
+                "`aluno_id` do token).\n"
+                "- `COMGRAD` / `ADMIN` — vê todos os chamados de todos os alunos.\n\n"
+                "**Filtros opcionais (combináveis):**\n"
+                "- `status`: `ABERTO` ou `FECHADO`.\n"
+                "- `tipo`: `TRILHA_REJEITADA` ou `NOVA_TRILHA`."
+            ),
+            responses={401: UNAUTHORIZED_401},
         )
 
         self.router.add_api_route(
@@ -37,6 +70,17 @@ class ChamadoController:
             methods=["PUT"],
             response_model=ChamadoResponse,
             dependencies=[require_roles(UserRole.COMGRAD, UserRole.ADMIN)],
+            summary="Responder chamado (COMGRAD/ADMIN)",
+            description=(
+                "Registra a resposta da COMGRAD e encerra o chamado: status muda "
+                "para `FECHADO`, `respondido_por_id` recebe o id do autor do token "
+                "e `respondido_em` é preenchido com o timestamp atual."
+            ),
+            responses={
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+                404: NOT_FOUND_404,
+            },
         )
 
     def abrir_chamado(
@@ -70,13 +114,14 @@ class ChamadoController:
     def listar_chamados(
         self,
         status: str | None = None,
+        tipo: str | None = None,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user),
     ):
         service = ChamadoService(db)
         user_service = UserService(db)
-        
-        chamados_db = service.listar(status)
+
+        chamados_db = service.listar(status=status, tipo=tipo)
         
         if current_user.role == UserRole.ALUNO:
             chamados_db = [c for c in chamados_db if c.aluno_id == current_user.id]
