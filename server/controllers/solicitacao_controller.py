@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from server.database import get_db
@@ -91,6 +91,32 @@ class SolicitacaoController:
         )
 
         self.router.add_api_route(
+            "/material/{solicitacao_id}",
+            self.baixar_material,
+            methods=["GET"],
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Baixar material da trilha aceita (ALUNO)",
+            description=(
+                "Gera e retorna o PDF com o material da trilha aceita pelo "
+                "aluno, contendo o resumo da trilha e as informações de cada "
+                "disciplina (código, nome, tipo, carga horária e link do plano "
+                "de ensino). Resposta com `Content-Type: application/pdf` e "
+                "`Content-Disposition: attachment`.\n\n"
+                "**Regras:**\n"
+                "- A solicitação precisa pertencer ao aluno autenticado (403 "
+                "caso contrário).\n"
+                "- A solicitação precisa estar em status `ACEITA` (400 caso "
+                "contrário)."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+                404: NOT_FOUND_404,
+            },
+        )
+
+        self.router.add_api_route(
             "/rejeitar/{solicitacao_id}",
             self.rejeitar_solicitacao,
             methods=["PATCH"],
@@ -165,6 +191,27 @@ class SolicitacaoController:
             trilha_id=payload.trilha_id,
         )
         return self._montar_response(solicitacao, UserService(db))
+
+    def baixar_material(
+        self,
+        solicitacao_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = SolicitacaoService(db)
+        pdf_bytes = service.gerar_material_pdf(
+            solicitacao_id=solicitacao_id,
+            aluno_id=current_user.id,
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="material_trilha_{solicitacao_id}.pdf"'
+                )
+            },
+        )
 
     def rejeitar_solicitacao(
         self,

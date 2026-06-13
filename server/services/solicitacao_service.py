@@ -1,4 +1,16 @@
+from io import BytesIO
+
 from fastapi import HTTPException
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import (
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 from sqlalchemy.orm import Session
 
 from server.models.enums import ChamadoTipo, SolicitacaoStatus
@@ -103,3 +115,78 @@ class SolicitacaoService:
             f"Solicitação #{solicitacao.id}. "
             "Aguardando orientação personalizada da COMGRAD."
         )
+
+    def gerar_material_pdf(
+        self, solicitacao_id: int, aluno_id: int
+    ) -> bytes:
+        solicitacao = self.obter(solicitacao_id)
+
+        if solicitacao.aluno_id != aluno_id:
+            raise HTTPException(status_code=403, detail="Acesso negado")
+
+        if solicitacao.status != SolicitacaoStatus.ACEITA:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Material disponível apenas para solicitações com trilha "
+                    f"aceita — status atual: {solicitacao.status.value}."
+                ),
+            )
+
+        trilha = solicitacao.trilha_aceita
+        if trilha is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Solicitação aceita sem trilha vinculada.",
+            )
+
+        return self._montar_pdf_material(trilha)
+
+    @staticmethod
+    def _montar_pdf_material(trilha) -> bytes:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=A4, title=f"Material da Trilha — {trilha.nome}"
+        )
+        styles = getSampleStyleSheet()
+
+        elementos = [
+            Paragraph(f"Material da Trilha: {trilha.nome}", styles["Title"]),
+            Spacer(1, 12),
+            Paragraph(trilha.resumo, styles["Normal"]),
+            Spacer(1, 18),
+            Paragraph("Disciplinas da trilha", styles["Heading2"]),
+            Spacer(1, 6),
+        ]
+
+        dados = [["Código", "Nome", "Tipo", "Carga horária", "Plano de ensino"]]
+        for disciplina in trilha.disciplinas:
+            dados.append(
+                [
+                    disciplina.codigo,
+                    disciplina.nome,
+                    disciplina.tipo.value,
+                    f"{disciplina.carga_horaria}h",
+                    disciplina.link_plano_ensino or "—",
+                ]
+            )
+
+        tabela = Table(dados, hAlign="LEFT")
+        tabela.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ALIGN", (0, 1), (-1, -1), "LEFT"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ]
+            )
+        )
+        elementos.append(tabela)
+
+        doc.build(elementos)
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        return pdf_bytes
