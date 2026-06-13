@@ -12,6 +12,13 @@ class DisciplinaRepository:
         stmt = select(Disciplina).where(Disciplina.is_active.is_(True))
         return list(self.db.scalars(stmt))
 
+    def listar(self, is_active: bool | None = None) -> list[Disciplina]:
+        stmt = select(Disciplina)
+        if is_active is not None:
+            stmt = stmt.where(Disciplina.is_active.is_(is_active))
+        stmt = stmt.order_by(Disciplina.nome.asc())
+        return list(self.db.scalars(stmt))
+
     def listar_por_ids_ativas(self, ids: list[int]) -> list[Disciplina]:
         if not ids:
             return []
@@ -36,11 +43,20 @@ class DisciplinaRepository:
 
     def criar(self, disciplina: Disciplina) -> Disciplina:
         self.db.add(disciplina)
-        self.db.flush()
+        self.db.commit()
+        self.db.refresh(disciplina)
+        return disciplina
+
+    def atualizar(self, disciplina: Disciplina, **campos) -> Disciplina:
+        for campo, valor in campos.items():
+            if valor is not None:
+                setattr(disciplina, campo, valor)
+        self.db.commit()
         self.db.refresh(disciplina)
         return disciplina
 
     def inativar(self, disciplina: Disciplina) -> Disciplina:
         disciplina.is_active = False
-        self.db.flush()
+        self.db.commit()
+        self.db.refresh(disciplina)
         return disciplina
