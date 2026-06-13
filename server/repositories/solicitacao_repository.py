@@ -63,6 +63,7 @@ class SolicitacaoRepository:
                 selectinload(Solicitacao.trilhas_candidatas).selectinload(
                     Trilha.disciplinas
                 ),
+                selectinload(Solicitacao.chamado),
             )
         )
         return self.db.scalars(stmt).one_or_none()
@@ -79,6 +80,7 @@ class SolicitacaoRepository:
             selectinload(Solicitacao.trilhas_candidatas).selectinload(
                 Trilha.disciplinas
             ),
+            selectinload(Solicitacao.chamado),
         )
         if aluno_id is not None:
             stmt = stmt.where(Solicitacao.aluno_id == aluno_id)
@@ -94,12 +96,42 @@ class SolicitacaoRepository:
         )
         return self.db.scalars(stmt).first() is not None
 
+    def existe_pendente_para_aluno(self, aluno_id: int) -> bool:
+        stmt = select(Solicitacao.id).where(
+            Solicitacao.aluno_id == aluno_id,
+            Solicitacao.status == SolicitacaoStatus.PENDENTE,
+        )
+        return self.db.scalars(stmt).first() is not None
+
+    def criar(
+        self, aluno_id: int, trilhas_candidatas: list[Trilha]
+    ) -> Solicitacao:
+        solicitacao = Solicitacao(
+            aluno_id=aluno_id,
+            status=SolicitacaoStatus.PENDENTE,
+            trilhas_candidatas=trilhas_candidatas,
+        )
+        self.db.add(solicitacao)
+        self.db.commit()
+        self.db.refresh(solicitacao)
+        return solicitacao
+
     def aceitar(
         self, solicitacao: Solicitacao, trilha: Trilha
     ) -> Solicitacao:
         solicitacao.trilha_aceita = trilha
         solicitacao.status = SolicitacaoStatus.ACEITA
         solicitacao.resolvido_em = datetime.now()
+        self.db.commit()
+        self.db.refresh(solicitacao)
+        return solicitacao
+
+    def rejeitar(
+        self, solicitacao: Solicitacao, chamado_id: int
+    ) -> Solicitacao:
+        solicitacao.status = SolicitacaoStatus.REJEITADA
+        solicitacao.resolvido_em = datetime.now()
+        solicitacao.chamado_id = chamado_id
         self.db.commit()
         self.db.refresh(solicitacao)
         return solicitacao

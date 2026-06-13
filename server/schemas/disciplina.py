@@ -1,10 +1,14 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from server.models.enums import DisciplinaTipo
+
 
 class DisciplinaCreate(BaseModel):
     nome: str
     codigo: str
+    tipo: DisciplinaTipo
     carga_horaria: int
+    link_plano_ensino: str | None = None
 
     @field_validator("nome", "codigo")
     @classmethod
@@ -24,7 +28,9 @@ class DisciplinaCreate(BaseModel):
 class DisciplinaUpdate(BaseModel):
     nome: str | None = None
     codigo: str | None = None
+    tipo: DisciplinaTipo | None = None
     carga_horaria: int | None = None
+    link_plano_ensino: str | None = None
 
     @field_validator("nome", "codigo")
     @classmethod
@@ -42,12 +48,27 @@ class DisciplinaUpdate(BaseModel):
 
 
 class DisciplinaResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": 12,
+                "nome": "Algoritmos e Estruturas de Dados",
+                "codigo": "INF01202",
+                "tipo": "OBRIGATORIA",
+                "carga_horaria": 60,
+                "link_plano_ensino": "https://www.inf.ufrgs.br/planos/inf01202.pdf",
+                "is_active": True,
+            }
+        },
+    )
 
     id: int
     nome: str
     codigo: str
+    tipo: DisciplinaTipo
     carga_horaria: int
+    link_plano_ensino: str | None = None
     is_active: bool
 
 
@@ -69,4 +90,6 @@ class DisciplinaResumo(BaseModel):
     id: int
     nome: str
     codigo: str
+    tipo: DisciplinaTipo
     carga_horaria: int
+    link_plano_ensino: str | None = None

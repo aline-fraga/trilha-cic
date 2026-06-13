@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from server.database import get_db
@@ -11,7 +11,12 @@ from server.schemas.responses import (
     NOT_FOUND_404,
     UNAUTHORIZED_401,
 )
-from server.schemas.solicitacao import AceitarTrilhaRequest, SolicitacaoResponse
+from server.schemas.chamado import ChamadoResponse
+from server.schemas.solicitacao import (
+    AceitarTrilhaRequest,
+    SolicitacaoResponse,
+    SolicitarTrilhaRequest,
+)
 from server.services.auth_service import get_current_user, require_roles
 from server.services.solicitacao_service import SolicitacaoService
 from server.services.user_service import UserService
@@ -38,6 +43,43 @@ class SolicitacaoController:
                 "`PENDENTE`, `ACEITA` ou `REJEITADA`."
             ),
             responses={401: UNAUTHORIZED_401},
+        )
+
+        self.router.add_api_route(
+            "/create",
+            self.criar_solicitacao,
+            methods=["POST"],
+            response_model=SolicitacaoResponse,
+            status_code=status.HTTP_201_CREATED,
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Solicitar trilha personalizada (ALUNO)",
+            description=(
+                "Recebe as respostas do aluno ao questionário vocacional, "
+                "executa o algoritmo de matching e cria uma `Solicitacao` "
+                "com status `PENDENTE` e as trilhas candidatas já populadas.\n\n"
+                "**Algoritmo (resumo):**\n"
+                "1. Score normalizado por trilha: "
+                "`Σ(R × W) / (5 × ΣW)` (∈ [0, 1]).\n"
+                "2. Ordena trilhas por score desc.\n"
+                "3. Indicador de confiança = gap entre top1 e top2:\n"
+                "   - gap ≥ 20 pp → **2** candidatas (perfil decidido)\n"
+                "   - 10–20 pp → **3** candidatas (perfil definido)\n"
+                "   - < 10 pp → **4** candidatas (perfil multidisciplinar)\n\n"
+                "**Regras:**\n"
+                "- `respostas` precisa cobrir exatamente todas as perguntas "
+                "ativas do sistema (sem faltas e sem ids inválidos).\n"
+                "- O aluno **não pode** ter solicitação `PENDENTE` em aberto "
+                "(400 caso contrário).\n"
+                "- O aluno **não pode** ter trilha `ACEITA` (limite atual = 1 "
+                "aceita por aluno; 400 caso contrário).\n\n"
+                "As respostas **não são persistidas** — apenas o resultado "
+                "(trilhas candidatas) fica gravado."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+            },
         )
 
         self.router.add_api_route(
@@ -89,6 +131,61 @@ class SolicitacaoController:
             },
         )
 
+        self.router.add_api_route(
+            "/material/{solicitacao_id}",
+            self.baixar_material,
+            methods=["GET"],
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Baixar material da trilha aceita (ALUNO)",
+            description=(
+                "Gera e retorna o PDF com o material da trilha aceita pelo "
+                "aluno, contendo o resumo da trilha e as informações de cada "
+                "disciplina (código, nome, tipo, carga horária e link do plano "
+                "de ensino). Resposta com `Content-Type: application/pdf` e "
+                "`Content-Disposition: attachment`.\n\n"
+                "**Regras:**\n"
+                "- A solicitação precisa pertencer ao aluno autenticado (403 "
+                "caso contrário).\n"
+                "- A solicitação precisa estar em status `ACEITA` (400 caso "
+                "contrário)."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+                404: NOT_FOUND_404,
+            },
+        )
+
+        self.router.add_api_route(
+            "/rejeitar/{solicitacao_id}",
+            self.rejeitar_solicitacao,
+            methods=["PATCH"],
+            response_model=SolicitacaoResponse,
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Rejeitar trilhas sugeridas (ALUNO)",
+            description=(
+                "Marca a solicitação como `REJEITADA` (todas as trilhas "
+                "candidatas são consideradas rejeitadas pelo aluno) e abre "
+                "automaticamente um chamado do tipo `TRILHA_REJEITADA` para a "
+                "COMGRAD prestar orientação personalizada. O chamado gerado "
+                "é retornado aninhado em `chamado`.\n\n"
+                "**Regras:**\n"
+                "- A solicitação precisa pertencer ao aluno autenticado (403 "
+                "caso contrário).\n"
+                "- A solicitação precisa estar em status `PENDENTE` (400 "
+                "caso contrário).\n"
+                "- O aluno **não pode** ter outro chamado `TRILHA_REJEITADA` "
+                "em aberto (regra do `ChamadoService`; 400 caso contrário)."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+                404: NOT_FOUND_404,
+            },
+        )
+
     def listar_solicitacoes(
         self,
         status: SolicitacaoStatus | None = None,
@@ -105,6 +202,19 @@ class SolicitacaoController:
         return [
             self._montar_response(s, user_service, cache) for s in solicitacoes
         ]
+
+    def criar_solicitacao(
+        self,
+        payload: SolicitarTrilhaRequest,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = SolicitacaoService(db)
+        solicitacao = service.solicitar(
+            aluno_id=current_user.id,
+            respostas=payload.respostas,
+        )
+        return self._montar_response(solicitacao, UserService(db))
 
     def obter_solicitacao(
         self,
@@ -136,6 +246,40 @@ class SolicitacaoController:
         )
         return self._montar_response(solicitacao, UserService(db))
 
+    def baixar_material(
+        self,
+        solicitacao_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = SolicitacaoService(db)
+        pdf_bytes = service.gerar_material_pdf(
+            solicitacao_id=solicitacao_id,
+            aluno_id=current_user.id,
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="material_trilha_{solicitacao_id}.pdf"'
+                )
+            },
+        )
+
+    def rejeitar_solicitacao(
+        self,
+        solicitacao_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = SolicitacaoService(db)
+        solicitacao = service.rejeitar(
+            solicitacao_id=solicitacao_id,
+            aluno_id=current_user.id,
+        )
+        return self._montar_response(solicitacao, UserService(db))
+
     @staticmethod
     def _montar_response(
         solicitacao: Solicitacao,
@@ -150,12 +294,33 @@ class SolicitacaoController:
             aluno = cache[solicitacao.aluno_id]
         else:
             aluno = user_service.obter(solicitacao.aluno_id)
+        nome_aluno = aluno.nome if aluno else "Desconhecido"
+
+        chamado_response: ChamadoResponse | None = None
+        if solicitacao.chamado is not None:
+            c = solicitacao.chamado
+            chamado_response = ChamadoResponse(
+                id=c.id,
+                aluno_id=c.aluno_id,
+                aluno_nome=nome_aluno,
+                tipo=c.tipo,
+                assunto=c.assunto,
+                mensagem=c.mensagem,
+                status=c.status,
+                resposta=c.resposta,
+                respondido_em=c.respondido_em,
+                trilha_id=c.trilha_id,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+            )
+
         return SolicitacaoResponse(
             id=solicitacao.id,
             aluno_id=solicitacao.aluno_id,
-            aluno_nome=aluno.nome if aluno else "Desconhecido",
+            aluno_nome=nome_aluno,
             trilhas_candidatas=solicitacao.trilhas_candidatas,
             trilha_aceita=solicitacao.trilha_aceita,
+            chamado=chamado_response,
             status=solicitacao.status,
             created_at=solicitacao.created_at,
             resolvido_em=solicitacao.resolvido_em,

@@ -1,107 +1,142 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from server.database import get_db
 from server.models.enums import UserRole
-from server.models.user import User
-from server.schemas.disciplina import DisciplinaCreate, DisciplinaResponse, DisciplinaUpdate
+from server.schemas.disciplina import (
+    DisciplinaCreate,
+    DisciplinaResponse,
+    DisciplinaUpdate,
+)
+from server.schemas.responses import (
+    BAD_REQUEST_400,
+    FORBIDDEN_403,
+    NOT_FOUND_404,
+    UNAUTHORIZED_401,
+)
 from server.services.auth_service import get_current_user, require_roles
 from server.services.disciplina_service import DisciplinaService
-
-_somente_comgrad = require_roles(UserRole.COMGRAD)
-_comgrad_ou_admin = require_roles(UserRole.COMGRAD, UserRole.ADMIN)
 
 
 class DisciplinaController:
     def __init__(self):
         self.router = APIRouter(prefix="/disciplinas", tags=["disciplinas"])
+        comgrad_only = [require_roles(UserRole.COMGRAD)]
+        comgrad_errors = {401: UNAUTHORIZED_401, 403: FORBIDDEN_403}
+
         self.router.add_api_route(
-            "/publico",
-            self.listar_publico,
+            "/get",
+            self.listar_disciplinas,
             methods=["GET"],
             response_model=list[DisciplinaResponse],
+            dependencies=[Depends(get_current_user)],
+            summary="Listar disciplinas",
+            description=(
+                "Lista as disciplinas cadastradas, ordenadas por nome.\n\n"
+                "Aceita filtro opcional `is_active` (`true`/`false`). Sem o "
+                "filtro, retorna ativas e inativas. Acessível a qualquer "
+                "usuário autenticado."
+            ),
+            responses={401: UNAUTHORIZED_401},
         )
+
         self.router.add_api_route(
-            "",
-            self.listar,
-            methods=["GET"],
-            response_model=list[DisciplinaResponse],
-        )
-        self.router.add_api_route(
-            "/{disciplina_id}",
-            self.buscar,
+            "/get/{disciplina_id}",
+            self.obter_disciplina,
             methods=["GET"],
             response_model=DisciplinaResponse,
+            dependencies=[Depends(get_current_user)],
+            summary="Obter disciplina por ID",
+            description=(
+                "Retorna os dados completos de uma disciplina ativa. "
+                "Disciplinas inativas retornam 404. Acessível a qualquer "
+                "usuário autenticado."
+            ),
+            responses={401: UNAUTHORIZED_401, 404: NOT_FOUND_404},
         )
+
         self.router.add_api_route(
-            "",
-            self.criar,
+            "/create",
+            self.criar_disciplina,
             methods=["POST"],
             response_model=DisciplinaResponse,
-            status_code=201,
+            status_code=status.HTTP_201_CREATED,
+            dependencies=comgrad_only,
+            summary="Cadastrar disciplina (COMGRAD)",
+            description=(
+                "Cria uma nova disciplina no catálogo. O `codigo` precisa ser "
+                "único — retorna 400 se já existir.\n\n"
+                "**Campos obrigatórios:** `nome`, `codigo`, `tipo` "
+                "(`OBRIGATORIA` ou `ELETIVA`), `carga_horaria` (> 0)."
+            ),
+            responses={**comgrad_errors, 400: BAD_REQUEST_400},
         )
+
         self.router.add_api_route(
-            "/{disciplina_id}",
-            self.atualizar,
+            "/update/{disciplina_id}",
+            self.atualizar_disciplina,
             methods=["PUT"],
             response_model=DisciplinaResponse,
+            dependencies=comgrad_only,
+            summary="Atualizar disciplina (COMGRAD)",
+            description=(
+                "Atualiza campos da disciplina. Apenas campos enviados são "
+                "alterados. Mudar `codigo` para um já existente retorna 400."
+            ),
+            responses={
+                **comgrad_errors,
+                400: BAD_REQUEST_400,
+                404: NOT_FOUND_404,
+            },
         )
+
         self.router.add_api_route(
-            "/{disciplina_id}",
-            self.excluir,
+            "/delete/{disciplina_id}",
+            self.excluir_disciplina,
             methods=["DELETE"],
-            status_code=204,
+            status_code=status.HTTP_204_NO_CONTENT,
+            dependencies=comgrad_only,
+            summary="Excluir disciplina (COMGRAD)",
+            description=(
+                "Desativa a disciplina (`is_active=false`). Exclusão lógica; "
+                "os dados ficam preservados no banco para manter histórico "
+                "em trilhas e currículos passados."
+            ),
+            responses={**comgrad_errors, 404: NOT_FOUND_404},
         )
 
-    def listar_publico(
+    def listar_disciplinas(
         self,
+        is_active: bool | None = None,
         db: Session = Depends(get_db),
-    ) -> list[DisciplinaResponse]:
-        return DisciplinaService(db).listar()
+    ):
+        return DisciplinaService(db).listar(is_active=is_active)
 
-    def listar(
-        self,
-        db: Session = Depends(get_db),
-        _: User = _comgrad_ou_admin,
-    ) -> list[DisciplinaResponse]:
-        return DisciplinaService(db).listar()
-
-    def buscar(
+    def obter_disciplina(
         self,
         disciplina_id: int,
         db: Session = Depends(get_db),
-        _: User = _comgrad_ou_admin,
-    ) -> DisciplinaResponse:
+    ):
         return DisciplinaService(db).buscar(disciplina_id)
 
-    def criar(
+    def criar_disciplina(
         self,
-        body: DisciplinaCreate,
+        payload: DisciplinaCreate,
         db: Session = Depends(get_db),
-        _: User = _somente_comgrad,
-    ) -> DisciplinaResponse:
-        disciplina = DisciplinaService(db).criar(body)
-        db.commit()
-        db.refresh(disciplina)
-        return disciplina
+    ):
+        return DisciplinaService(db).criar(payload)
 
-    def atualizar(
+    def atualizar_disciplina(
         self,
         disciplina_id: int,
-        body: DisciplinaUpdate,
+        payload: DisciplinaUpdate,
         db: Session = Depends(get_db),
-        _: User = _somente_comgrad,
-    ) -> DisciplinaResponse:
-        disciplina = DisciplinaService(db).atualizar(disciplina_id, body)
-        db.commit()
-        db.refresh(disciplina)
-        return disciplina
+    ):
+        return DisciplinaService(db).atualizar(disciplina_id, payload)
 
-    def excluir(
+    def excluir_disciplina(
         self,
         disciplina_id: int,
         db: Session = Depends(get_db),
-        _: User = _somente_comgrad,
-    ) -> None:
+    ):
         DisciplinaService(db).excluir(disciplina_id)
-        db.commit()
