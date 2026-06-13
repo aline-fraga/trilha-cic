@@ -1,4 +1,18 @@
+from datetime import datetime
+from io import BytesIO
+
 from fastapi import HTTPException
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import (
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 from sqlalchemy.orm import Session
 
 from server.models.enums import ChamadoTipo, SolicitacaoStatus
@@ -6,10 +20,12 @@ from server.models.solicitacao import Solicitacao
 from server.repositories.solicitacao_repository import SolicitacaoRepository
 from server.schemas.chamado import ChamadoCreate
 from server.services.chamado_service import ChamadoService
+from server.services.user_service import UserService
 
 
 class SolicitacaoService:
     def __init__(self, db: Session):
+        self.db = db
         self.solicitacao_repo = SolicitacaoRepository(db)
         self.chamado_service = ChamadoService(db)
 
@@ -103,3 +119,121 @@ class SolicitacaoService:
             f"Solicitação #{solicitacao.id}. "
             "Aguardando orientação personalizada da COMGRAD."
         )
+
+    def gerar_material_pdf(
+        self, solicitacao_id: int, aluno_id: int
+    ) -> bytes:
+        solicitacao = self.obter(solicitacao_id)
+
+        if solicitacao.aluno_id != aluno_id:
+            raise HTTPException(status_code=403, detail="Acesso negado")
+
+        if solicitacao.status != SolicitacaoStatus.ACEITA:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Material disponível apenas para solicitações com trilha "
+                    f"aceita — status atual: {solicitacao.status.value}."
+                ),
+            )
+
+        trilha = solicitacao.trilha_aceita
+        if trilha is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Solicitação aceita sem trilha vinculada.",
+            )
+
+        aluno = UserService(self.db).obter(aluno_id)
+        nome_aluno = aluno.nome if aluno else "Desconhecido"
+
+        return self._montar_pdf_material(
+            trilha=trilha,
+            nome_aluno=nome_aluno,
+            aceito_em=solicitacao.resolvido_em,
+        )
+
+    @staticmethod
+    def _montar_pdf_material(
+        trilha, nome_aluno: str, aceito_em: datetime | None
+    ) -> bytes:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=A4, title=f"Material da Trilha — {trilha.nome}"
+        )
+        styles = getSampleStyleSheet()
+
+        data_aceite = (
+            aceito_em.strftime("%d/%m/%Y") if aceito_em is not None else "—"
+        )
+
+        elementos = [
+            Paragraph(f"Material da Trilha: {trilha.nome}", styles["Title"]),
+            Spacer(1, 6),
+            Paragraph(
+                f"<b>Aluno:</b> {nome_aluno} &nbsp;&nbsp;|&nbsp;&nbsp; "
+                f"<b>Aceito em:</b> {data_aceite}",
+                styles["Normal"],
+            ),
+            Spacer(1, 12),
+            Paragraph(trilha.resumo, styles["Normal"]),
+            Spacer(1, 18),
+            Paragraph("Disciplinas da trilha", styles["Heading2"]),
+            Spacer(1, 6),
+        ]
+
+        dados = [["Código", "Nome", "Tipo", "Carga horária", "Plano de ensino"]]
+        total_horas = 0
+        for disciplina in trilha.disciplinas:
+            total_horas += disciplina.carga_horaria
+            dados.append(
+                [
+                    disciplina.codigo,
+                    disciplina.nome,
+                    disciplina.tipo.value,
+                    f"{disciplina.carga_horaria}h",
+                    disciplina.link_plano_ensino or "—",
+                ]
+            )
+
+        tabela = Table(dados, hAlign="LEFT")
+        tabela.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ALIGN", (0, 1), (-1, -1), "LEFT"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ]
+            )
+        )
+        elementos.append(tabela)
+        elementos.append(Spacer(1, 12))
+        elementos.append(
+            Paragraph(
+                f"<b>Carga horária total:</b> {total_horas}h",
+                styles["Normal"],
+            )
+        )
+
+        def desenhar_rodape(canvas, doc_):
+            canvas.saveState()
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(colors.grey)
+            canvas.drawCentredString(
+                A4[0] / 2.0,
+                1 * cm,
+                f"TrilhaCiC — UFRGS/INF — Página {doc_.page}",
+            )
+            canvas.restoreState()
+
+        doc.build(
+            elementos,
+            onFirstPage=desenhar_rodape,
+            onLaterPages=desenhar_rodape,
+        )
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        return pdf_bytes
