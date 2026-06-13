@@ -1,0 +1,79 @@
+<div class="gerenciar-trilhas">
+  <div class="gerenciar-trilhas__header">
+    <h2>Gestão de Trilhas</h2>
+    <button class="btn btn--primary" (click)="abrirCadastro()">+ Nova trilha</button>
+  </div>
+
+  <p class="erro" *ngIf="erroGeral">{{ erroGeral }}</p>
+
+  <table class="tabela">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Resumo</th>
+        <th>Disciplinas</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of trilhas">
+        <td>{{ t.nome }}</td>
+        <td class="resumo-cell">{{ t.resumo }}</td>
+        <td>{{ disciplinasSelecionadas(t) }}</td>
+        <td class="acoes">
+          <button class="btn btn--secondary" (click)="abrirEdicao(t)">Editar</button>
+          <button class="btn btn--danger" (click)="excluir(t)">Excluir</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="trilhas.length === 0 && !erroGeral">Nenhuma trilha cadastrada.</p>
+
+  <div class="overlay" *ngIf="mostrarFormulario" (click)="fecharFormulario()"></div>
+
+  <aside class="painel" *ngIf="mostrarFormulario">
+    <div class="painel__header">
+      <h3>{{ editando ? 'Editar trilha' : 'Nova trilha' }}</h3>
+      <button class="btn--fechar" (click)="fecharFormulario()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+      <div class="campo">
+        <label>Nome *</label>
+        <input formControlName="nome" type="text" />
+        <span class="campo__erro" *ngIf="campoInvalido('nome')">Nome é obrigatório</span>
+        <span class="campo__erro" *ngIf="erros['nome']">{{ erros['nome'] }}</span>
+      </div>
+
+      <div class="campo">
+        <label>Resumo *</label>
+        <textarea formControlName="resumo" rows="4"></textarea>
+        <span class="campo__erro" *ngIf="campoInvalido('resumo')">Resumo é obrigatório</span>
+        <span class="campo__erro" *ngIf="erros['resumo']">{{ erros['resumo'] }}</span>
+      </div>
+
+      <div class="campo">
+        <label>Disciplinas *</label>
+        <div class="disciplinas-lista">
+          <label class="disciplina-item" *ngFor="let d of disciplinas" [class.disciplina-item--desabilitada]="disciplinaDesabilitada(d.id)">
+            <input
+              type="checkbox"
+              [value]="d.id"
+              [checked]="disciplinaSelecionada(d.id)"
+              [disabled]="disciplinaDesabilitada(d.id)"
+              (change)="toggleDisciplina(d.id, $event)"
+            />
+            {{ d.codigo }} — {{ d.nome }}
+          </label>
+        </div>
+        <span class="campo__erro" *ngIf="erros['disciplinas_ids']">{{ erros['disciplinas_ids'] }}</span>
+      </div>
+
+      <div class="painel__acoes">
+        <button type="button" class="btn btn--secondary" (click)="fecharFormulario()">Cancelar</button>
+        <button type="submit" class="btn btn--primary">Salvar</button>
+      </div>
+    </form>
+  </aside>
+</div>

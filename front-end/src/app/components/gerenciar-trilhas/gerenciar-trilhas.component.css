@@ -1,0 +1,182 @@
+.gerenciar-trilhas {
+  padding: 1.5rem;
+}
+
+.gerenciar-trilhas__header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 20%;
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0;
+}
+
+.gerenciar-trilhas__header h2 {
+  grid-column: 1 / -1;
+  margin-bottom: 0.4rem;
+}
+
+.gerenciar-trilhas__header button {
+  grid-column: 4;
+  justify-self: start;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  table-layout: fixed;
+}
+
+.tabela th,
+.tabela td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.tabela th:nth-child(4),
+.tabela td:nth-child(4) { width: 20%; }
+
+.tabela th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.resumo-cell {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acoes {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.erro {
+  color: #c62828;
+  margin-bottom: 1rem;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 40;
+}
+
+.painel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 420px;
+  background: #fff;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.painel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.btn--fechar {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  gap: 0.3rem;
+}
+
+.campo label {
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.campo select[multiple] {
+  height: 150px;
+}
+
+.disciplinas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.disciplina-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.disciplina-item--desabilitada {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.campo__erro {
+  color: #c62828;
+  font-size: 0.8rem;
+}
+
+.painel__acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn--primary {
+  background: #1565c0;
+  color: #fff;
+}
+
+.btn--secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn--danger {
+  background: #c62828;
+  color: #fff;
+}

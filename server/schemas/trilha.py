@@ -44,7 +44,7 @@ class TrilhaCreate(BaseModel):
 
     nome: str = Field(min_length=1, max_length=150)
     resumo: str = Field(min_length=1)
-    disciplinas_ids: list[int] = Field(min_length=1)
+    disciplinas_ids: list[int] = Field(min_length=1, max_length=4)
 
 
 class TrilhaUpdate(BaseModel):
@@ -52,11 +52,11 @@ class TrilhaUpdate(BaseModel):
         json_schema_extra={
             "example": {
                 "nome": "Inteligência Artificial Aplicada",
-                "disciplinas_ids": [3, 7, 12, 18, 22],
+                "disciplinas_ids": [3, 7, 12, 18],
             }
         }
     )
 
     nome: str | None = Field(default=None, min_length=1, max_length=150)
     resumo: str | None = Field(default=None, min_length=1)
-    disciplinas_ids: list[int] | None = Field(default=None, min_length=1)
+    disciplinas_ids: list[int] | None = Field(default=None, min_length=1, max_length=4)
