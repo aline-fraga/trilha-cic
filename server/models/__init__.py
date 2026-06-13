@@ -5,9 +5,12 @@ from server.models.disciplina import Disciplina
 from server.models.enums import (
     ChamadoStatus,
     ChamadoTipo,
+    DisciplinaTipo,
+    PerguntaTipo,
     SolicitacaoStatus,
     UserRole,
 )
+from server.models.pergunta import Pergunta, PerguntaTrilhaPeso
 from server.models.relatorio import Relatorio, RelatorioItem
 from server.models.solicitacao import Solicitacao, solicitacao_trilhas_candidatas
 from server.models.sugestao_trilha import SugestaoTrilha, sugestao_trilha_disciplinas
@@ -22,6 +25,10 @@ __all__ = [
     "Curriculo",
     "curriculo_disciplinas",
     "Disciplina",
+    "DisciplinaTipo",
+    "Pergunta",
+    "PerguntaTipo",
+    "PerguntaTrilhaPeso",
     "Relatorio",
     "RelatorioItem",
     "Solicitacao",

@@ -1,11 +1,14 @@
 from datetime import datetime
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.database import Base
 from server.models.disciplina import Disciplina
+
+if TYPE_CHECKING:
+    from server.models.pergunta import PerguntaTrilhaPeso
 
 trilha_disciplinas = Table(
     "trilha_disciplinas",
@@ -35,4 +38,7 @@ class Trilha(Base):
 
     disciplinas: Mapped[List[Disciplina]] = relationship(
         secondary=trilha_disciplinas, back_populates="trilhas"
+    )
+    pesos_perguntas: Mapped[List["PerguntaTrilhaPeso"]] = relationship(
+        back_populates="trilha", cascade="all, delete-orphan"
     )

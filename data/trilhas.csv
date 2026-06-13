@@ -1,4 +1,7 @@
 nome,resumo,disciplinas_codigos
-Inteligência Artificial,"Trilha voltada para técnicas modernas de IA — aprendizado de máquina, redes neurais profundas, agentes inteligentes e algoritmos bioinspirados.",INF01092;INF05004;INF05019;INF01037
-Engenharia de Software,"Trilha focada em práticas de desenvolvimento de software de qualidade — testes, metodologias ágeis, modelagem de processos e aplicações web.",INF01214;INF01215;INF01216;INF01099
-Banco de Dados,"Trilha dedicada a banco de dados — desde projeto e arquitetura até abordagens distribuídas e tendências modernas (NoSQL, bancos especializados).",INF01023;INF01095;INF01006;INF01014
+Ciência de Dados,"Trilha focada em análise e ciência de dados, com ênfase em técnicas de processamento, modelagem e armazenamento de grandes coleções de informações.",INF01090;INF01099;INF01095;INF01006
+Inteligência Artificial,"Trilha voltada para técnicas modernas de IA — aprendizado profundo, visão computacional, recuperação de informação, robótica e impactos sociais da tecnologia.",INF01092;INF01081;INF05004;INF01096;INF01034;INF01140
+Redes e Segurança,"Trilha focada em redes de computadores, protocolos modernos, serviços distribuídos e segurança de sistemas.",INF01005;INF01082;INF01097;INF01002
+Engenharia de Software e Desenvolvimento Web,"Trilha dedicada à construção de software de qualidade — métodos ágeis, modelagem de processos, teste, aplicações web e empreendedorismo.",INF01099;INF01215;INF01216;INT00003;INF01214
+Visualização e Computação Gráfica,"Trilha focada em computação gráfica, processamento de imagens, fotografia computacional e tecnologias imersivas (RV/RA).",INF01009;INF01213;INF01098;INF01089
+Processamento de Alto Desempenho,"Trilha voltada a computação paralela e distribuída, otimização de software, arquiteturas modernas e algoritmos avançados.",INF01091;INF01056;INF01094;INF01191

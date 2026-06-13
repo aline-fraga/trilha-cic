@@ -21,3 +21,13 @@ class SolicitacaoStatus(str, enum.Enum):
     PENDENTE = "PENDENTE"
     ACEITA = "ACEITA"
     REJEITADA = "REJEITADA"
+
+
+class PerguntaTipo(str, enum.Enum):
+    CONCEITUAL = "CONCEITUAL"
+    PRATICA = "PRATICA"
+
+
+class DisciplinaTipo(str, enum.Enum):
+    OBRIGATORIA = "OBRIGATORIA"
+    ELETIVA = "ELETIVA"

@@ -19,7 +19,9 @@ from server.models.enums import ChamadoTipo, SolicitacaoStatus
 from server.models.solicitacao import Solicitacao
 from server.repositories.solicitacao_repository import SolicitacaoRepository
 from server.schemas.chamado import ChamadoCreate
+from server.schemas.solicitacao import RespostaPerguntaInput
 from server.services.chamado_service import ChamadoService
+from server.services.trilha_service import TrilhaService
 from server.services.user_service import UserService
 
 
@@ -28,6 +30,7 @@ class SolicitacaoService:
         self.db = db
         self.solicitacao_repo = SolicitacaoRepository(db)
         self.chamado_service = ChamadoService(db)
+        self.trilha_service = TrilhaService(db)
 
     def listar(
         self,
@@ -43,6 +46,32 @@ class SolicitacaoService:
                 status_code=404, detail="Solicitação não encontrada."
             )
         return solicitacao
+
+    def solicitar(
+        self, aluno_id: int, respostas: list[RespostaPerguntaInput]
+    ) -> Solicitacao:
+        if self.solicitacao_repo.existe_pendente_para_aluno(aluno_id):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Aluno já possui uma solicitação pendente. "
+                    "Aceite ou rejeite a atual antes de solicitar nova."
+                ),
+            )
+        if self.solicitacao_repo.existe_aceita_para_aluno(aluno_id):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Aluno já possui uma trilha aceita. "
+                    "Apenas uma trilha aceita por aluno é permitida."
+                ),
+            )
+
+        trilhas_candidatas = self.trilha_service.sugerir_trilhas(respostas)
+        solicitacao = self.solicitacao_repo.criar(
+            aluno_id=aluno_id, trilhas_candidatas=trilhas_candidatas
+        )
+        return self.obter(solicitacao.id)
 
     def aceitar(
         self, solicitacao_id: int, aluno_id: int, trilha_id: int
