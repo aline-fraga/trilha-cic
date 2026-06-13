@@ -5,6 +5,7 @@ from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.database import Base
+from server.models.enums import DisciplinaTipo
 
 
 class Disciplina(Base):
@@ -13,7 +14,9 @@ class Disciplina(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(String(150), nullable=False)
     codigo: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    tipo: Mapped[DisciplinaTipo] = mapped_column(nullable=False)
     carga_horaria: Mapped[int] = mapped_column(nullable=False)
+    link_plano_ensino: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="1")
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()

@@ -31,9 +31,16 @@ class TrilhaController:
             status_code=status.HTTP_201_CREATED,
             summary="Cadastrar nova trilha",
             description=(
-                "Cria uma trilha acadêmica nova com nome, resumo e lista de "
-                "disciplinas. Todas as disciplinas referenciadas precisam existir "
-                "e estar ativas — caso contrário, retorna 400 listando os ids inválidos."
+                "Cria uma trilha acadêmica nova com nome, resumo, lista de "
+                "disciplinas e **pesos do questionário vocacional**.\n\n"
+                "**Regras:**\n"
+                "- Todas as disciplinas referenciadas precisam existir e estar "
+                "ativas (400 listando os ids inválidos caso contrário).\n"
+                "- `pesos` precisa cobrir **exatamente** as perguntas ativas do "
+                "sistema — sem faltas e sem ids inválidos. Use `peso=0` quando "
+                "a pergunta não pontua nesta trilha. Sem perguntas ativas no "
+                "sistema, o cadastro é bloqueado.\n"
+                "- Cada `peso` está no intervalo `[0.0, 1.0]`."
             ),
             responses={400: BAD_REQUEST_400},
         )
@@ -44,8 +51,11 @@ class TrilhaController:
             response_model=TrilhaResponse,
             summary="Editar trilha existente",
             description=(
-                "Atualização parcial: apenas os campos enviados são alterados. "
-                "A validação de disciplinas é a mesma do cadastro."
+                "Atualização parcial: apenas os campos enviados são alterados.\n\n"
+                "Quando `pesos` é enviado, **substitui completamente** os pesos "
+                "atuais da trilha e precisa cobrir exatamente as perguntas ativas "
+                "(mesma regra do cadastro). Quando omitido, os pesos atuais ficam "
+                "intactos."
             ),
             responses={400: BAD_REQUEST_400, 404: NOT_FOUND_404},
         )
@@ -80,6 +90,7 @@ class TrilhaController:
             nome=payload.nome,
             resumo=payload.resumo,
             disciplinas_ids=payload.disciplinas_ids,
+            pesos=payload.pesos,
         )
 
     def editar_trilha(
@@ -94,6 +105,7 @@ class TrilhaController:
             nome=payload.nome,
             resumo=payload.resumo,
             disciplinas_ids=payload.disciplinas_ids,
+            pesos=payload.pesos,
         )
 
     def excluir_trilha(

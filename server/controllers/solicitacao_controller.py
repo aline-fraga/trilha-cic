@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from server.database import get_db
@@ -12,7 +12,11 @@ from server.schemas.responses import (
     UNAUTHORIZED_401,
 )
 from server.schemas.chamado import ChamadoResponse
-from server.schemas.solicitacao import AceitarTrilhaRequest, SolicitacaoResponse
+from server.schemas.solicitacao import (
+    AceitarTrilhaRequest,
+    SolicitacaoResponse,
+    SolicitarTrilhaRequest,
+)
 from server.services.auth_service import get_current_user, require_roles
 from server.services.solicitacao_service import SolicitacaoService
 from server.services.user_service import UserService
@@ -39,6 +43,43 @@ class SolicitacaoController:
                 "`PENDENTE`, `ACEITA` ou `REJEITADA`."
             ),
             responses={401: UNAUTHORIZED_401},
+        )
+
+        self.router.add_api_route(
+            "/create",
+            self.criar_solicitacao,
+            methods=["POST"],
+            response_model=SolicitacaoResponse,
+            status_code=status.HTTP_201_CREATED,
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Solicitar trilha personalizada (ALUNO)",
+            description=(
+                "Recebe as respostas do aluno ao questionário vocacional, "
+                "executa o algoritmo de matching e cria uma `Solicitacao` "
+                "com status `PENDENTE` e as trilhas candidatas já populadas.\n\n"
+                "**Algoritmo (resumo):**\n"
+                "1. Score normalizado por trilha: "
+                "`Σ(R × W) / (5 × ΣW)` (∈ [0, 1]).\n"
+                "2. Ordena trilhas por score desc.\n"
+                "3. Indicador de confiança = gap entre top1 e top2:\n"
+                "   - gap ≥ 20 pp → **2** candidatas (perfil decidido)\n"
+                "   - 10–20 pp → **3** candidatas (perfil definido)\n"
+                "   - < 10 pp → **4** candidatas (perfil multidisciplinar)\n\n"
+                "**Regras:**\n"
+                "- `respostas` precisa cobrir exatamente todas as perguntas "
+                "ativas do sistema (sem faltas e sem ids inválidos).\n"
+                "- O aluno **não pode** ter solicitação `PENDENTE` em aberto "
+                "(400 caso contrário).\n"
+                "- O aluno **não pode** ter trilha `ACEITA` (limite atual = 1 "
+                "aceita por aluno; 400 caso contrário).\n\n"
+                "As respostas **não são persistidas** — apenas o resultado "
+                "(trilhas candidatas) fica gravado."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+            },
         )
 
         self.router.add_api_route(
@@ -161,6 +202,19 @@ class SolicitacaoController:
         return [
             self._montar_response(s, user_service, cache) for s in solicitacoes
         ]
+
+    def criar_solicitacao(
+        self,
+        payload: SolicitarTrilhaRequest,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = SolicitacaoService(db)
+        solicitacao = service.solicitar(
+            aluno_id=current_user.id,
+            respostas=payload.respostas,
+        )
+        return self._montar_response(solicitacao, UserService(db))
 
     def obter_solicitacao(
         self,

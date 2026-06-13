@@ -5,6 +5,7 @@ from server.controllers.auth_controller import AuthController
 from server.controllers.chamado_controller import ChamadoController
 from server.controllers.curriculo_controller import CurriculoController
 from server.controllers.disciplina_controller import DisciplinaController
+from server.controllers.pergunta_controller import PerguntaController
 from server.controllers.relatorio_controller import RelatorioController
 from server.controllers.solicitacao_controller import SolicitacaoController
 from server.controllers.sugestao_trilha_controller import SugestaoTrilhaController
@@ -48,8 +49,16 @@ TAGS_METADATA = [
     {
         "name": "solicitacoes",
         "description": (
-            "Solicitações de trilha personalizada (UC03/UC04/UC06): listagem, "
-            "aceite e rejeição. Cada aluno pode ter no máximo 1 trilha `ACEITA`."
+            "Solicitações de trilha personalizada (UC03/UC04/UC06): criação, "
+            "listagem, aceite, rejeição e download do material. Cada aluno "
+            "pode ter no máximo 1 trilha `ACEITA` e 1 solicitação `PENDENTE`."
+        ),
+    },
+    {
+        "name": "perguntas",
+        "description": (
+            "Perguntas do questionário vocacional usado em `POST "
+            "/solicitacoes/create` (UC03). Escrita exclusiva da COMGRAD."
         ),
     },
 ]
@@ -94,6 +103,7 @@ relatorio_controller = RelatorioController()
 chamado_controller = ChamadoController()
 sugestao_trilha_controller = SugestaoTrilhaController()
 solicitacao_controller = SolicitacaoController()
+pergunta_controller = PerguntaController()
 
 app.include_router(trilha_controller.router)
 app.include_router(auth_controller.router)
@@ -104,3 +114,4 @@ app.include_router(user_controller.router)
 app.include_router(chamado_controller.router)
 app.include_router(sugestao_trilha_controller.router)
 app.include_router(solicitacao_controller.router)
+app.include_router(pergunta_controller.router)

@@ -96,6 +96,26 @@ class SolicitacaoRepository:
         )
         return self.db.scalars(stmt).first() is not None
 
+    def existe_pendente_para_aluno(self, aluno_id: int) -> bool:
+        stmt = select(Solicitacao.id).where(
+            Solicitacao.aluno_id == aluno_id,
+            Solicitacao.status == SolicitacaoStatus.PENDENTE,
+        )
+        return self.db.scalars(stmt).first() is not None
+
+    def criar(
+        self, aluno_id: int, trilhas_candidatas: list[Trilha]
+    ) -> Solicitacao:
+        solicitacao = Solicitacao(
+            aluno_id=aluno_id,
+            status=SolicitacaoStatus.PENDENTE,
+            trilhas_candidatas=trilhas_candidatas,
+        )
+        self.db.add(solicitacao)
+        self.db.commit()
+        self.db.refresh(solicitacao)
+        return solicitacao
+
     def aceitar(
         self, solicitacao: Solicitacao, trilha: Trilha
     ) -> Solicitacao:

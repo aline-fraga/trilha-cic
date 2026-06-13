@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from server.models import Disciplina, Trilha, trilha_disciplinas
+from server.models import Disciplina, PerguntaTrilhaPeso, Trilha, trilha_disciplinas
 
 
 class TrilhaRepository:
@@ -12,7 +12,10 @@ class TrilhaRepository:
         stmt = (
             select(Trilha)
             .where(Trilha.is_active.is_(True))
-            .options(selectinload(Trilha.disciplinas))
+            .options(
+                selectinload(Trilha.disciplinas),
+                selectinload(Trilha.pesos_perguntas),
+            )
         )
         return list(self.db.scalars(stmt))
 
@@ -35,15 +38,31 @@ class TrilhaRepository:
         stmt = (
             select(Trilha)
             .where(Trilha.id == trilha_id)
-            .options(selectinload(Trilha.disciplinas))
+            .options(
+                selectinload(Trilha.disciplinas),
+                selectinload(Trilha.pesos_perguntas),
+            )
         )
         return self.db.scalars(stmt).one_or_none()
 
     def criar(
-        self, nome: str, resumo: str, disciplinas: list[Disciplina]
+        self,
+        nome: str,
+        resumo: str,
+        disciplinas: list[Disciplina],
+        pesos: list[tuple[int, float]],
     ) -> Trilha:
         trilha = Trilha(nome=nome, resumo=resumo, disciplinas=disciplinas)
         self.db.add(trilha)
+        self.db.flush()
+        for pergunta_id, peso in pesos:
+            self.db.add(
+                PerguntaTrilhaPeso(
+                    pergunta_id=pergunta_id,
+                    trilha_id=trilha.id,
+                    peso=peso,
+                )
+            )
         self.db.commit()
         self.db.refresh(trilha)
         return trilha
@@ -54,6 +73,7 @@ class TrilhaRepository:
         nome: str | None = None,
         resumo: str | None = None,
         disciplinas: list[Disciplina] | None = None,
+        pesos: list[tuple[int, float]] | None = None,
     ) -> Trilha:
         if nome is not None:
             trilha.nome = nome
@@ -61,6 +81,17 @@ class TrilhaRepository:
             trilha.resumo = resumo
         if disciplinas is not None:
             trilha.disciplinas = disciplinas
+        if pesos is not None:
+            trilha.pesos_perguntas.clear()
+            self.db.flush()
+            for pergunta_id, peso in pesos:
+                self.db.add(
+                    PerguntaTrilhaPeso(
+                        pergunta_id=pergunta_id,
+                        trilha_id=trilha.id,
+                        peso=peso,
+                    )
+                )
         self.db.commit()
         self.db.refresh(trilha)
         return trilha
