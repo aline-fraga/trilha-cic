@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from server.models.enums import SolicitacaoStatus
+from server.schemas.chamado import ChamadoResponse
 from server.schemas.trilha import TrilhaResponse
 
 
@@ -37,6 +38,7 @@ class SolicitacaoResponse(BaseModel):
                     },
                 ],
                 "trilha_aceita": None,
+                "chamado": None,
                 "status": "PENDENTE",
                 "created_at": "2026-06-12T15:30:00",
                 "resolvido_em": None,
@@ -49,6 +51,7 @@ class SolicitacaoResponse(BaseModel):
     aluno_nome: str
     trilhas_candidatas: list[TrilhaResponse]
     trilha_aceita: TrilhaResponse | None = None
+    chamado: ChamadoResponse | None = None
     status: SolicitacaoStatus
     created_at: datetime
     resolvido_em: datetime | None = None

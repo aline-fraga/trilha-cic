@@ -1,14 +1,17 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from server.models.enums import SolicitacaoStatus
+from server.models.enums import ChamadoTipo, SolicitacaoStatus
 from server.models.solicitacao import Solicitacao
 from server.repositories.solicitacao_repository import SolicitacaoRepository
+from server.schemas.chamado import ChamadoCreate
+from server.services.chamado_service import ChamadoService
 
 
 class SolicitacaoService:
     def __init__(self, db: Session):
         self.solicitacao_repo = SolicitacaoRepository(db)
+        self.chamado_service = ChamadoService(db)
 
     def listar(
         self,
@@ -66,3 +69,37 @@ class SolicitacaoService:
             )
 
         return self.solicitacao_repo.aceitar(solicitacao, trilha_escolhida)
+
+    def rejeitar(self, solicitacao_id: int, aluno_id: int) -> Solicitacao:
+        solicitacao = self.obter(solicitacao_id)
+
+        if solicitacao.aluno_id != aluno_id:
+            raise HTTPException(status_code=403, detail="Acesso negado")
+
+        if solicitacao.status != SolicitacaoStatus.PENDENTE:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Solicitação já resolvida — status atual: "
+                    f"{solicitacao.status.value}."
+                ),
+            )
+
+        chamado = self.chamado_service.criar(
+            ChamadoCreate(
+                tipo=ChamadoTipo.TRILHA_REJEITADA,
+                assunto=f"Trilhas sugeridas rejeitadas — solicitação #{solicitacao.id}",
+                mensagem=self._montar_mensagem_rejeicao(solicitacao),
+            ),
+            aluno_id,
+        )
+        return self.solicitacao_repo.rejeitar(solicitacao, chamado.id)
+
+    @staticmethod
+    def _montar_mensagem_rejeicao(solicitacao: Solicitacao) -> str:
+        nomes = ", ".join(t.nome for t in solicitacao.trilhas_candidatas)
+        return (
+            f"O aluno rejeitou as trilhas sugeridas: {nomes}. "
+            f"Solicitação #{solicitacao.id}. "
+            "Aguardando orientação personalizada da COMGRAD."
+        )

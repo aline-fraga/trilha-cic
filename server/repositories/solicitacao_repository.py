@@ -63,6 +63,7 @@ class SolicitacaoRepository:
                 selectinload(Solicitacao.trilhas_candidatas).selectinload(
                     Trilha.disciplinas
                 ),
+                selectinload(Solicitacao.chamado),
             )
         )
         return self.db.scalars(stmt).one_or_none()
@@ -79,6 +80,7 @@ class SolicitacaoRepository:
             selectinload(Solicitacao.trilhas_candidatas).selectinload(
                 Trilha.disciplinas
             ),
+            selectinload(Solicitacao.chamado),
         )
         if aluno_id is not None:
             stmt = stmt.where(Solicitacao.aluno_id == aluno_id)
@@ -100,6 +102,16 @@ class SolicitacaoRepository:
         solicitacao.trilha_aceita = trilha
         solicitacao.status = SolicitacaoStatus.ACEITA
         solicitacao.resolvido_em = datetime.now()
+        self.db.commit()
+        self.db.refresh(solicitacao)
+        return solicitacao
+
+    def rejeitar(
+        self, solicitacao: Solicitacao, chamado_id: int
+    ) -> Solicitacao:
+        solicitacao.status = SolicitacaoStatus.REJEITADA
+        solicitacao.resolvido_em = datetime.now()
+        solicitacao.chamado_id = chamado_id
         self.db.commit()
         self.db.refresh(solicitacao)
         return solicitacao
