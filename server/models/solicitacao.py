@@ -5,6 +5,7 @@ from sqlalchemy import Column, DateTime, Enum, ForeignKey, Table, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.database import Base
+from server.models.chamado import Chamado
 from server.models.enums import SolicitacaoStatus
 from server.models.trilha import Trilha
 
@@ -32,6 +33,9 @@ class Solicitacao(Base):
     trilha_aceita_id: Mapped[int | None] = mapped_column(
         ForeignKey("trilhas.id"), nullable=True
     )
+    chamado_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chamados.id"), nullable=True, unique=True
+    )
     status: Mapped[SolicitacaoStatus] = mapped_column(
         Enum(SolicitacaoStatus),
         nullable=False,
@@ -48,3 +52,4 @@ class Solicitacao(Base):
     trilhas_candidatas: Mapped[List[Trilha]] = relationship(
         secondary=solicitacao_trilhas_candidatas
     )
+    chamado: Mapped[Chamado | None] = relationship()

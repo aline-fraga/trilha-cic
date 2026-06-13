@@ -11,6 +11,7 @@ from server.schemas.responses import (
     NOT_FOUND_404,
     UNAUTHORIZED_401,
 )
+from server.schemas.chamado import ChamadoResponse
 from server.schemas.solicitacao import AceitarTrilhaRequest, SolicitacaoResponse
 from server.services.auth_service import get_current_user, require_roles
 from server.services.solicitacao_service import SolicitacaoService
@@ -89,6 +90,35 @@ class SolicitacaoController:
             },
         )
 
+        self.router.add_api_route(
+            "/rejeitar/{solicitacao_id}",
+            self.rejeitar_solicitacao,
+            methods=["PATCH"],
+            response_model=SolicitacaoResponse,
+            dependencies=[require_roles(UserRole.ALUNO)],
+            summary="Rejeitar trilhas sugeridas (ALUNO)",
+            description=(
+                "Marca a solicitação como `REJEITADA` (todas as trilhas "
+                "candidatas são consideradas rejeitadas pelo aluno) e abre "
+                "automaticamente um chamado do tipo `TRILHA_REJEITADA` para a "
+                "COMGRAD prestar orientação personalizada. O chamado gerado "
+                "é retornado aninhado em `chamado`.\n\n"
+                "**Regras:**\n"
+                "- A solicitação precisa pertencer ao aluno autenticado (403 "
+                "caso contrário).\n"
+                "- A solicitação precisa estar em status `PENDENTE` (400 "
+                "caso contrário).\n"
+                "- O aluno **não pode** ter outro chamado `TRILHA_REJEITADA` "
+                "em aberto (regra do `ChamadoService`; 400 caso contrário)."
+            ),
+            responses={
+                400: BAD_REQUEST_400,
+                401: UNAUTHORIZED_401,
+                403: FORBIDDEN_403,
+                404: NOT_FOUND_404,
+            },
+        )
+
     def listar_solicitacoes(
         self,
         status: SolicitacaoStatus | None = None,
@@ -136,6 +166,19 @@ class SolicitacaoController:
         )
         return self._montar_response(solicitacao, UserService(db))
 
+    def rejeitar_solicitacao(
+        self,
+        solicitacao_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
+        service = SolicitacaoService(db)
+        solicitacao = service.rejeitar(
+            solicitacao_id=solicitacao_id,
+            aluno_id=current_user.id,
+        )
+        return self._montar_response(solicitacao, UserService(db))
+
     @staticmethod
     def _montar_response(
         solicitacao: Solicitacao,
@@ -150,12 +193,33 @@ class SolicitacaoController:
             aluno = cache[solicitacao.aluno_id]
         else:
             aluno = user_service.obter(solicitacao.aluno_id)
+        nome_aluno = aluno.nome if aluno else "Desconhecido"
+
+        chamado_response: ChamadoResponse | None = None
+        if solicitacao.chamado is not None:
+            c = solicitacao.chamado
+            chamado_response = ChamadoResponse(
+                id=c.id,
+                aluno_id=c.aluno_id,
+                aluno_nome=nome_aluno,
+                tipo=c.tipo,
+                assunto=c.assunto,
+                mensagem=c.mensagem,
+                status=c.status,
+                resposta=c.resposta,
+                respondido_em=c.respondido_em,
+                trilha_id=c.trilha_id,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+            )
+
         return SolicitacaoResponse(
             id=solicitacao.id,
             aluno_id=solicitacao.aluno_id,
-            aluno_nome=aluno.nome if aluno else "Desconhecido",
+            aluno_nome=nome_aluno,
             trilhas_candidatas=solicitacao.trilhas_candidatas,
             trilha_aceita=solicitacao.trilha_aceita,
+            chamado=chamado_response,
             status=solicitacao.status,
             created_at=solicitacao.created_at,
             resolvido_em=solicitacao.resolvido_em,
