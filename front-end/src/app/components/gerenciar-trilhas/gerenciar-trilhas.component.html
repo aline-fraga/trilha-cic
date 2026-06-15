@@ -70,11 +70,54 @@
         <span class="campo__erro" *ngIf="erros['disciplinas_ids']">{{ erros['disciplinas_ids'] }}</span>
       </div>
 
+      <div class="campo">
+        <div class="campo__cabecalho">
+          <label>Pesos por pergunta *</label>
+          <span class="campo__ajuda">Informe um peso entre 0 e 1 para cada pergunta ativa.</span>
+        </div>
+
+        <div class="pesos-lista" *ngIf="perguntasAtivas.length; else semPerguntasAtivas">
+          <article class="peso-item" *ngFor="let pergunta of perguntasAtivas; let i = index">
+            <div class="peso-item__texto">
+              <span class="peso-item__tipo">{{ tipoPerguntaLabel(pergunta.tipo) }}</span>
+              <strong>Pergunta {{ i + 1 }}</strong>
+              <p>{{ pergunta.enunciado }}</p>
+            </div>
+
+            <div class="peso-item__controle">
+              <label [for]="'peso-' + pergunta.id">Peso</label>
+              <input
+                [id]="'peso-' + pergunta.id"
+                type="number"
+                min="0"
+                max="1"
+                step="0.1"
+                [formControl]="pesoControl(i)"
+                (input)="limparErroGeral()"
+              />
+              <span class="campo__erro" *ngIf="pesoInvalido(i)">
+                Informe um valor entre 0 e 1.
+              </span>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #semPerguntasAtivas>
+          <span class="campo__erro">
+            Não há perguntas ativas cadastradas. Cadastre perguntas antes de criar uma trilha.
+          </span>
+        </ng-template>
+      </div>
+
       <p class="painel__erro" *ngIf="erroGeral">{{ erroGeral }}</p>
 
       <div class="painel__acoes">
         <button type="button" class="btn btn--secondary" (click)="fecharFormulario()">Cancelar</button>
-        <button type="submit" class="btn btn--primary" [disabled]="salvando">
+        <button
+          type="submit"
+          class="btn btn--primary"
+          [disabled]="salvando || !perguntasAtivas.length"
+        >
           {{ salvando ? 'Salvando...' : 'Salvar' }}
         </button>
       </div>

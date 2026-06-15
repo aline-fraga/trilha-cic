@@ -1,5 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { Disciplina } from '../../models/disciplina';
 import { Pergunta } from '../../models/pergunta';
 import { Trilha } from '../../models/trilha';
@@ -43,7 +49,9 @@ export class GerenciarTrilhasComponent implements OnInit {
       nome: [trilha?.nome ?? '', [Validators.required]],
       resumo: [trilha?.resumo ?? '', [Validators.required]],
       disciplinas_ids: [trilha?.disciplinas.map((d) => d.id) ?? []],
+      pesos: this.fb.array([]),
     });
+    this.reconstruirPesos(trilha);
     this.erros = {};
     this.erroGeral = '';
   }
@@ -64,7 +72,12 @@ export class GerenciarTrilhasComponent implements OnInit {
 
   private carregarPerguntasAtivas(): void {
     this.perguntasService.listar(true).subscribe({
-      next: (perguntas) => (this.perguntasAtivas = perguntas),
+      next: (perguntas) => {
+        this.perguntasAtivas = [...perguntas].sort(
+          (a, b) => a.ordem - b.ordem || a.id - b.id
+        );
+        this.reconstruirPesos();
+      },
       error: () => {},
     });
   }
@@ -101,8 +114,7 @@ export class GerenciarTrilhasComponent implements OnInit {
     this.erroGeral = '';
     this.salvando = true;
 
-    const valor = this.form.value;
-    const payload = this.editando ? valor : this.montarPayloadCriacao(valor);
+    const payload = this.montarPayload();
 
     const request$ = this.editando
       ? this.trilhasService.atualizar(this.editando.id, payload)
@@ -139,6 +151,10 @@ export class GerenciarTrilhasComponent implements OnInit {
     return !!(c && c.invalid && c.touched);
   }
 
+  get pesosArray(): FormArray {
+    return this.form.get('pesos') as FormArray;
+  }
+
   disciplinaSelecionada(id: number): boolean {
     return (this.form.get('disciplinas_ids')?.value as number[]).includes(id);
   }
@@ -169,6 +185,19 @@ export class GerenciarTrilhasComponent implements OnInit {
     this.erroGeral = '';
   }
 
+  pesoInvalido(index: number): boolean {
+    const controle = this.pesoControl(index);
+    return !!(controle && controle.invalid && controle.touched);
+  }
+
+  pesoControl(index: number): FormControl {
+    return this.pesosArray.at(index) as FormControl;
+  }
+
+  tipoPerguntaLabel(tipo: Pergunta['tipo']): string {
+    return tipo === 'PRATICA' ? 'Prática' : 'Conceitual';
+  }
+
   private extrairMensagemErro(err: any): any {
     const detail = err?.error?.detail;
 
@@ -190,16 +219,38 @@ export class GerenciarTrilhasComponent implements OnInit {
     return null;
   }
 
-  private montarPayloadCriacao(valor: {
-    nome: string;
-    resumo: string;
-    disciplinas_ids: number[];
-  }) {
+  private reconstruirPesos(trilha?: Trilha): void {
+    if (!this.form) {
+      return;
+    }
+
+    const pesosExistentes = new Map(
+      (trilha?.pesos ?? []).map((peso) => [peso.pergunta_id, peso.peso])
+    );
+
+    const pesosArray = this.fb.array(
+      this.perguntasAtivas.map((pergunta) =>
+        this.fb.control(
+          pesosExistentes.has(pergunta.id) ? pesosExistentes.get(pergunta.id) : null,
+          [
+          Validators.required,
+          Validators.min(0),
+          Validators.max(1),
+          ]
+        )
+      )
+    );
+    this.form.setControl('pesos', pesosArray);
+  }
+
+  private montarPayload() {
+    const valor = this.form.value;
+
     return {
       ...valor,
-      pesos: this.perguntasAtivas.map((pergunta) => ({
+      pesos: this.perguntasAtivas.map((pergunta, index) => ({
         pergunta_id: pergunta.id,
-        peso: 0,
+        peso: Number(this.pesosArray.at(index).value),
       })),
     };
   }

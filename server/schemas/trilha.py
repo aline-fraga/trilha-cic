@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from server.schemas.disciplina import DisciplinaResumo
 
@@ -10,6 +10,16 @@ class PesoPerguntaInput(BaseModel):
 
     pergunta_id: int
     peso: float = Field(ge=0.0, le=1.0)
+
+
+class PesoPerguntaResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"example": {"pergunta_id": 1, "peso": 1.0}},
+    )
+
+    pergunta_id: int
+    peso: float
 
 
 class TrilhaResponse(BaseModel):
@@ -38,6 +48,10 @@ class TrilhaResponse(BaseModel):
     nome: str
     resumo: str
     disciplinas: list[DisciplinaResumo]
+    pesos: list[PesoPerguntaResponse] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("pesos", "pesos_perguntas"),
+    )
 
 
 class TrilhaCreate(BaseModel):
