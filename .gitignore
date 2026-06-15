@@ -221,6 +221,9 @@ __marimo__/
 *.db
 *.db-journal
 
+# TrilhaCiC — saída do teste de carga (Locust), regenerada a cada execução
+server/test/load_results.txt
+
 # Frontend
 front-end/node_modules/
 
