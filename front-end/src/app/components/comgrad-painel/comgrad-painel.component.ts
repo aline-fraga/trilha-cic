@@ -11,7 +11,6 @@ import { ChamadoService, Chamado } from '../../services/chamado.service';
   styleUrl: './comgrad-painel.component.css'
 })
 export class ComgradPainelComponent implements OnInit {
-  abaAtual: 'responder' | 'sugestoes' | 'cadeiras' | 'curriculo' = 'responder';
   
   chamados: Chamado[] = [];
   isLoading = true;
@@ -44,13 +43,8 @@ export class ComgradPainelComponent implements OnInit {
     });
   }
 
-  mudarAba(aba: 'responder' | 'sugestoes' | 'cadeiras' | 'curriculo'): void {
-    this.abaAtual = aba;
-    this.chamadoSelecionado = null;
-    this.respostaTexto = '';
-    this.termoBusca = '';
-    this.filtroStatus = 'TODOS';
-    this.ordenacao = 'RECENTES';
+  get chamadosFiltrados(): Chamado[] {
+    return this.aplicarFiltros(this.chamados);
   }
 
   private aplicarFiltros(lista: Chamado[]): Chamado[] {
@@ -81,15 +75,7 @@ export class ComgradPainelComponent implements OnInit {
     return filtrada;
   }
 
-  get chamadosResponder(): Chamado[] {
-    const base = this.chamados.filter(c => c.tipo !== 'NOVA_TRILHA');
-    return this.aplicarFiltros(base);
-  }
 
-  get chamadosSugestoes(): Chamado[] {
-    const base = this.chamados.filter(c => c.tipo === 'NOVA_TRILHA');
-    return this.aplicarFiltros(base);
-  }
 
   selecionarChamado(chamado: Chamado): void {
     this.chamadoSelecionado = chamado;
@@ -102,10 +88,12 @@ export class ComgradPainelComponent implements OnInit {
   }
 
   enviarResposta(): void {
-    if (!this.chamadoSelecionado || !this.respostaTexto.trim()) return;
+    if (!this.chamadoSelecionado) return;
 
     this.isSubmitting = true;
-    this.chamadoService.responderChamado(this.chamadoSelecionado.id, this.respostaTexto).subscribe({
+    const respostaPadrao = this.respostaTexto.trim() || 'Chamado analisado e encerrado pela coordenação.';
+
+    this.chamadoService.responderChamado(this.chamadoSelecionado.id, respostaPadrao).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.carregarChamados();

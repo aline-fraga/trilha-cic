@@ -1,125 +1,83 @@
 <section class="page-shell">
   <header class="hero">
     <div class="hero__top">
-      <div>
-        <h1>Área da COMGRAD</h1>
-      </div>
     </div>
     <p>Painel administrativo para análise e resposta de solicitações dos alunos.</p>
   </header>
 
-  <nav class="comgrad-tabs">
-    <button class="comgrad-tab" [class.active]="abaAtual === 'responder'" (click)="mudarAba('responder')">Responder Chamados</button>
-    <button class="comgrad-tab" [class.active]="abaAtual === 'sugestoes'" (click)="mudarAba('sugestoes')">Sugestões de Trilhas</button>
-    <button class="comgrad-tab" [class.active]="abaAtual === 'cadeiras'" (click)="mudarAba('cadeiras')">Cadastro de Cadeiras</button>
-    <button class="comgrad-tab" [class.active]="abaAtual === 'curriculo'" (click)="mudarAba('curriculo')">Currículo</button>
-  </nav>
-
   <div *ngIf="isLoading" class="loading-state">Carregando dados...</div>
 
   <section class="form-panel" *ngIf="!isLoading">
+    <ng-container *ngIf="!chamadoSelecionado">
 
-    <!-- ABAS NÃO IMPLEMENTADAS -->
-    <div *ngIf="abaAtual === 'cadeiras' || abaAtual === 'curriculo'" class="empty-state">
-      <h3>Não implementado ainda</h3>
-      <p>Este módulo será disponibilizado nas próximas versões do portal.</p>
-    </div>
+      <div class="filtros-bar">
+        <input type="text" class="form-control" placeholder="Pesquisar por assunto ou e-mail..."
+          [(ngModel)]="termoBusca" />
+        <select class="form-control" [(ngModel)]="filtroStatus">
+          <option value="TODOS">Todos os status</option>
+          <option value="ABERTO">Abertos</option>
+          <option value="FECHADO">Fechados</option>
+        </select>
+        <select class="form-control" [(ngModel)]="ordenacao">
+          <option value="RECENTES">Mais Recentes</option>
+          <option value="ANTIGOS">Mais Antigos</option>
+        </select>
+      </div>
 
-    <!-- ABAS IMPLEMENTADAS -->
-    <ng-container *ngIf="abaAtual === 'responder' || abaAtual === 'sugestoes'">
-      
-      <!-- Lista de Chamados daquela aba -->
-      <ng-container *ngIf="!chamadoSelecionado">
-        
-        <div class="filtros-bar">
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Pesquisar por assunto ou e-mail..." 
-            [(ngModel)]="termoBusca" 
-          />
-          <select class="form-control" [(ngModel)]="filtroStatus">
-            <option value="TODOS">Todos os status</option>
-            <option value="ABERTO">Abertos</option>
-            <option value="FECHADO">Fechados</option>
-          </select>
-          <select class="form-control" [(ngModel)]="ordenacao">
-            <option value="RECENTES">Mais Recentes</option>
-            <option value="ANTIGOS">Mais Antigos</option>
-          </select>
-        </div>
+      <div *ngIf="chamadosFiltrados.length === 0" class="empty-state">
+        Nenhum chamado corresponde aos filtros atuais.
+      </div>
 
-        <div *ngIf="(abaAtual === 'responder' ? chamadosResponder : chamadosSugestoes).length === 0" class="empty-state">
-          Nenhum chamado corresponde aos filtros atuais.
-        </div>
-
-        <div class="chamados-list" *ngIf="(abaAtual === 'responder' ? chamadosResponder : chamadosSugestoes).length > 0">
-          <div class="chamado-card" *ngFor="let c of (abaAtual === 'responder' ? chamadosResponder : chamadosSugestoes)">
-            <div class="chamado-card__header">
-              <span class="chamado-status" [ngClass]="{'status-aberto': c.status === 'ABERTO', 'status-fechado': c.status === 'FECHADO'}">
-                {{ c.status }}
-              </span>
-              <span class="chamado-date">{{ c.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
-            </div>
-            <h3 class="chamado-title">{{ c.assunto }}</h3>
-            <p class="chamado-aluno">Enviado por: {{ c.aluno_nome }}</p>
-            <button class="btn-secondary btn-sm" (click)="selecionarChamado(c)">
-              {{ c.status === 'ABERTO' ? 'Responder Chamado' : 'Ver Detalhes' }}
-            </button>
+      <div class="chamados-list" *ngIf="chamadosFiltrados.length > 0">
+        <div class="chamado-card" *ngFor="let c of chamadosFiltrados">
+          <div class="chamado-card__header">
+            <span class="chamado-status"
+              [ngClass]="{'status-aberto': c.status === 'ABERTO', 'status-fechado': c.status === 'FECHADO'}">
+              {{ c.status }}
+            </span>
+            <span class="chamado-date">{{ c.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
-        </div>
-
-      </ng-container>
-
-      <!-- Detalhes e Formulário de Resposta -->
-      <ng-container *ngIf="chamadoSelecionado">
-        <div class="detalhes-header">
-          <span class="chamado-status" [ngClass]="{'status-aberto': chamadoSelecionado.status === 'ABERTO', 'status-fechado': chamadoSelecionado.status === 'FECHADO'}">
-            {{ chamadoSelecionado.status }}
-          </span>
-          <span class="chamado-date">{{ chamadoSelecionado.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
-        </div>
-        
-        <h2 class="detalhes-assunto">{{ chamadoSelecionado.assunto }}</h2>
-        <p class="chamado-aluno">Enviado por: {{ chamadoSelecionado.aluno_nome }}</p>
-        
-        <div class="detalhes-box">
-          <h4>Mensagem Original:</h4>
-          <p>{{ chamadoSelecionado.mensagem }}</p>
-        </div>
-
-        <div class="detalhes-box detalhes-box--resposta" *ngIf="chamadoSelecionado.status === 'FECHADO'">
-          <h4>Resposta da COMGRAD:</h4>
-          <p>{{ chamadoSelecionado.resposta }}</p>
-          <small>Respondido em: {{ chamadoSelecionado.respondido_em | date:'dd/MM/yyyy HH:mm' }}</small>
-        </div>
-
-        <div class="form-group" *ngIf="chamadoSelecionado.status === 'ABERTO'">
-          <label class="form-label" for="respostaTexto">Escreva a Devolutiva</label>
-          <textarea
-            id="respostaTexto"
-            name="respostaTexto"
-            class="form-control"
-            [(ngModel)]="respostaTexto"
-            placeholder="Digite a resposta oficial da coordenação..."
-            rows="5"
-          ></textarea>
-        </div>
-
-        <div class="form-actions" style="margin-top: 24px;">
-          <button type="button" class="btn-secondary" (click)="voltarParaLista()">Voltar para a Lista</button>
-          <button 
-            type="button" 
-            class="btn-primary" 
-            *ngIf="chamadoSelecionado.status === 'ABERTO'"
-            [disabled]="isSubmitting || !respostaTexto.trim()"
-            (click)="enviarResposta()"
-          >
-            {{ isSubmitting ? 'Enviando...' : 'Responder e Encerrar Chamado' }}
+          <h3 class="chamado-title">{{ c.assunto }}</h3>
+          <p class="chamado-aluno">Enviado por: {{ c.aluno_nome }}</p>
+          <button class="btn-secondary btn-sm" (click)="selecionarChamado(c)">
+            {{ c.status === 'ABERTO' ? 'Responder Chamado' : 'Ver Detalhes' }}
           </button>
         </div>
-      </ng-container>
+      </div>
 
+    </ng-container>
+
+    <!-- Detalhes e Formulário de Resposta -->
+    <ng-container *ngIf="chamadoSelecionado">
+      <div class="detalhes-header">
+        <span class="chamado-status"
+          [ngClass]="{'status-aberto': chamadoSelecionado.status === 'ABERTO', 'status-fechado': chamadoSelecionado.status === 'FECHADO'}">
+          {{ chamadoSelecionado.status }}
+        </span>
+        <span class="chamado-date">{{ chamadoSelecionado.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+
+      <h2 class="detalhes-assunto">{{ chamadoSelecionado.assunto }}</h2>
+      <p class="chamado-aluno">Enviado por: {{ chamadoSelecionado.aluno_nome }}</p>
+
+      <div class="detalhes-box">
+        <h4>Mensagem Original:</h4>
+        <p>{{ chamadoSelecionado.mensagem }}</p>
+      </div>
+
+      <div class="detalhes-box detalhes-box--resposta" *ngIf="chamadoSelecionado.status === 'FECHADO'">
+        <h4>Resposta da COMGRAD:</h4>
+        <p>{{ chamadoSelecionado.resposta }}</p>
+        <small>Respondido em: {{ chamadoSelecionado.respondido_em | date:'dd/MM/yyyy HH:mm' }}</small>
+      </div>
+
+      <div class="form-actions" style="margin-top: 24px;">
+        <button type="button" class="btn-secondary" (click)="voltarParaLista()">Voltar para a Lista</button>
+        <button type="button" class="btn-primary" *ngIf="chamadoSelecionado.status === 'ABERTO'"
+          [disabled]="isSubmitting" (click)="enviarResposta()">
+          {{ isSubmitting ? 'Enviando...' : 'Encerrar Chamado' }}
+        </button>
+      </div>
     </ng-container>
 
   </section>

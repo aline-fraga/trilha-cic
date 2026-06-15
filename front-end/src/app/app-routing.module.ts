@@ -12,6 +12,7 @@ import { SugerirTrilhasComponent } from './components/sugerir-trilhas/sugerir-tr
 
 import { ChamadoComgradComponent } from './components/chamado-comgrad/chamado-comgrad.component';
 import { ComgradPainelComponent } from './components/comgrad-painel/comgrad-painel.component';
+import { RelatorioTrilhasComponent } from './components/relatorio-trilhas/relatorio-trilhas.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -46,7 +47,7 @@ const routes: Routes = [
     path: 'comgrad/painel',
     component: ComgradPainelComponent,
     canActivate: [AuthGuard],
-    data: { title: 'Área da COMGRAD' },
+    data: { title: 'Área da COMGRAD', roles: ['COMGRAD', 'ADMIN'] },
   },
   {
     path: 'gerenciar-trilhas',
@@ -62,9 +63,9 @@ const routes: Routes = [
   },
   {
     path: 'relatorios',
-    component: NotImplementedComponent,
+    component: RelatorioTrilhasComponent,
     canActivate: [AuthGuard],
-    data: { title: 'Relatórios' },
+    data: { title: 'Relatórios', roles: ['COMGRAD', 'ADMIN'] },
   },
   { path: '**', redirectTo: 'trilhas' },
 ];

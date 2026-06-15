@@ -18,7 +18,7 @@ export class ChamadoComgradComponent implements OnInit {
   isLoading = true;
 
   novoChamado = {
-    assunto: '',
+    assunto: 'Revisão de Trilha Sugerida',
     mensagem: '',
     tipo: 'TRILHA_REJEITADA'
   };
@@ -88,7 +88,7 @@ export class ChamadoComgradComponent implements OnInit {
       next: () => {
         this.isSubmitting = false;
         this.successMessage = 'Chamado enviado com sucesso! A COMGRAD analisará sua solicitação em breve.';
-        this.novoChamado = { assunto: '', mensagem: '', tipo: 'TRILHA_REJEITADA' };
+        this.novoChamado = { assunto: 'Revisão de Trilha Sugerida', mensagem: '', tipo: 'TRILHA_REJEITADA' };
         this.carregarChamados();
         setTimeout(() => {
           this.voltarParaLista();

@@ -1,0 +1,147 @@
+<div class="page-shell">
+  <div class="hero">
+    <div class="hero-content">
+      <p class="page-subtitle">Gere relatórios de demanda de trilhas baseados nas escolhas dos alunos e exporte em PDF.</p>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <!-- MENSAGENS -->
+    <div class="alert alert-error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
+
+    <!-- TELA PRINCIPAL -->
+    <ng-container *ngIf="!relatorioSelecionado">
+      
+      <!-- FORMULÁRIO DE GERAÇÃO -->
+      <section class="form-panel generate-panel">
+        <div class="panel-header">
+          <h2>Gerar Novo Relatório</h2>
+          <p class="panel-desc">Escolha o intervalo de datas para consolidar os aceites e rejeições.</p>
+        </div>
+        
+        <form [formGroup]="gerarForm" (ngSubmit)="onGerar()" class="generate-form">
+          <div class="form-group">
+            <label for="periodo_inicio" class="form-label">Data de Início <span class="required">*</span></label>
+            <input type="date" id="periodo_inicio" formControlName="periodo_inicio" class="form-control">
+          </div>
+          
+          <div class="form-group">
+            <label for="periodo_fim" class="form-label">Data de Fim <span class="required">*</span></label>
+            <input type="date" id="periodo_fim" formControlName="periodo_fim" class="form-control">
+          </div>
+
+          <div class="form-actions generate-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="isGenerating || gerarForm.invalid">
+              {{ isGenerating ? 'Gerando...' : 'Gerar Relatório' }}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- HISTÓRICO -->
+      <section class="history-panel">
+        <div class="panel-header">
+          <h2>Histórico de Relatórios</h2>
+        </div>
+
+        <div class="loading-state" *ngIf="isLoading && relatorios.length === 0">
+          <div class="spinner"></div>
+          <p>Carregando relatórios...</p>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoading && relatorios.length === 0">
+          <p>Nenhum relatório foi gerado ainda.</p>
+        </div>
+
+        <div class="reports-grid" *ngIf="relatorios.length > 0">
+          <div class="report-card" *ngFor="let r of relatorios">
+            <div class="report-header">
+              <span class="report-id">Relatório #{{ r.id }}</span>
+              <span class="report-date">{{ r.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            
+            <div class="report-body">
+              <p class="report-period">
+                <strong>Período:</strong><br>
+                {{ r.periodo_inicio | date:'dd/MM/yyyy' }} a {{ r.periodo_fim | date:'dd/MM/yyyy' }}
+              </p>
+              <div class="report-stats-summary">
+                <span class="badge badge-success" title="Aceites">{{ r.total_aceites }}</span>
+                <span class="badge badge-danger" title="Rejeições">{{ r.total_rejeicoes }}</span>
+              </div>
+            </div>
+
+            <div class="report-footer">
+              <button class="btn btn-secondary btn-sm" (click)="verDetalhes(r.id)">Ver Detalhes</button>
+              <button class="btn btn-primary btn-sm" (click)="baixarPdf(r.id)">PDF</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+
+    <!-- VISUALIZAÇÃO DETALHADA DO RELATÓRIO -->
+    <ng-container *ngIf="relatorioSelecionado">
+      <div class="details-header">
+        <button class="btn btn-secondary btn-sm" (click)="voltarParaLista()">&larr; Voltar</button>
+        <button class="btn btn-primary" (click)="baixarPdf(relatorioSelecionado.id)">Download PDF</button>
+      </div>
+
+      <section class="form-panel report-details">
+        <div class="report-details-header">
+          <h2>Relatório de Demanda #{{ relatorioSelecionado.id }}</h2>
+          <p class="report-meta">Gerado em {{ relatorioSelecionado.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p class="report-meta">Período: {{ relatorioSelecionado.periodo_inicio | date:'dd/MM/yyyy' }} até {{ relatorioSelecionado.periodo_fim | date:'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="overview-cards">
+          <div class="overview-card">
+            <h3>Total de Respostas</h3>
+            <span class="stat-number">{{ relatorioSelecionado.total_solicitacoes }}</span>
+          </div>
+          <div class="overview-card success">
+            <h3>Aceites</h3>
+            <span class="stat-number">{{ relatorioSelecionado.total_aceites }}</span>
+          </div>
+          <div class="overview-card danger">
+            <h3>Rejeições</h3>
+            <span class="stat-number">{{ relatorioSelecionado.total_rejeicoes }}</span>
+          </div>
+        </div>
+
+        <div class="trails-stats-container">
+          <h3>Detalhamento por Trilha</h3>
+          
+          <div class="empty-state" *ngIf="relatorioSelecionado.itens.length === 0">
+            Nenhuma resposta de trilha encontrada neste período.
+          </div>
+
+          <div class="trail-stat-card" *ngFor="let item of relatorioSelecionado.itens">
+            <div class="trail-stat-header">
+              <h4>{{ item.trilha.nome }}</h4>
+              <span class="trail-ratio">{{ item.aceites }} Aceites / {{ item.rejeicoes }} Rejeições</span>
+            </div>
+            
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar">
+                <div class="progress-fill success" [style.width.%]="getTaxaAceitacao(item)"></div>
+                <div class="progress-fill danger" [style.width.%]="100 - getTaxaAceitacao(item)"></div>
+              </div>
+              <div class="progress-labels">
+                <span class="label-success">{{ getTaxaAceitacao(item) | number:'1.0-1' }}% Aceitação</span>
+                <span class="label-danger" *ngIf="item.rejeicoes > 0">{{ 100 - getTaxaAceitacao(item) | number:'1.0-1' }}% Rejeição</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </ng-container>
+
+  </div>
+</div>
