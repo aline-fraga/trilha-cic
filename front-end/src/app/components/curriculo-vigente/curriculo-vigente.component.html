@@ -1,0 +1,70 @@
+<section class="curriculo-vigente">
+  <header class="curriculo-vigente__hero">
+    <div>
+      <p class="curriculo-vigente__eyebrow">Consulta acadêmica</p>
+      <h1>Currículo vigente</h1>
+      <p class="curriculo-vigente__intro">
+        Consulte todas as disciplinas cadastradas no sistema, com código, tipo,
+        carga horária, status e link do plano de ensino quando disponível.
+      </p>
+    </div>
+  </header>
+
+  <p class="curriculo-vigente__erro" *ngIf="erroGeral">{{ erroGeral }}</p>
+  <p class="curriculo-vigente__estado" *ngIf="carregando">Carregando disciplinas...</p>
+  <p class="curriculo-vigente__estado" *ngIf="!carregando && !erroGeral && !disciplinas.length">
+    Nenhuma disciplina foi encontrada.
+  </p>
+
+  <ng-container *ngIf="!carregando && disciplinas.length">
+    <section class="curriculo-vigente__resumo">
+      <article class="curriculo-vigente__meta">
+        <span class="curriculo-vigente__meta-label">Disciplinas</span>
+        <strong>{{ totalDisciplinas }}</strong>
+      </article>
+      <article class="curriculo-vigente__meta">
+        <span class="curriculo-vigente__meta-label">Ativas</span>
+        <strong>{{ totalAtivas }}</strong>
+      </article>
+      <article class="curriculo-vigente__meta">
+        <span class="curriculo-vigente__meta-label">Carga horária total</span>
+        <strong>{{ cargaHorariaTotal }}h</strong>
+      </article>
+    </section>
+
+    <section class="curriculo-vigente__tabela-wrap">
+      <table class="curriculo-vigente__tabela">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Disciplina</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Carga horária</th>
+            <th>Plano de ensino</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let disciplina of disciplinas">
+            <td>{{ disciplina.codigo }}</td>
+            <td>{{ disciplina.nome }}</td>
+            <td>{{ formatarTipo(disciplina.tipo) }}</td>
+            <td>{{ formatarStatus(disciplina.is_active) }}</td>
+            <td>{{ disciplina.carga_horaria }}h</td>
+            <td>
+              <a
+                *ngIf="disciplina.link_plano_ensino; else semPlano"
+                [href]="disciplina.link_plano_ensino"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir plano
+              </a>
+              <ng-template #semPlano>Não informado</ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </ng-container>
+</section>

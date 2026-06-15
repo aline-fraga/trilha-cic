@@ -17,6 +17,12 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
+  "/curriculos": {
+    "target": "http://localhost:8000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
   "/perguntas": {
     "target": "http://localhost:8000",
     "secure": false,
@@ -30,6 +36,12 @@
     "logLevel": "debug"
   },
   "/chamados": {
+    "target": "http://localhost:8000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/sugestoes-trilha": {
     "target": "http://localhost:8000",
     "secure": false,
     "changeOrigin": true,

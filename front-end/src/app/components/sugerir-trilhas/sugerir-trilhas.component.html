@@ -1,0 +1,238 @@
+<section class="page-shell">
+  <header class="hero">
+    <div class="hero__top">
+      <img
+        class="hero__logo"
+        src="/logo-inf-ufrgs.png"
+        alt="Logo oficial do Instituto de Informática da UFRGS"
+      />
+      <div>
+        <div class="hero__eyebrow">UC13</div>
+        <h1>Sugerir nova trilha acadêmica</h1>
+      </div>
+    </div>
+    <p>
+      Proponha uma nova trilha para avaliação da COMGRAD. Escolha um nome,
+      selecione de 1 a 4 disciplinas do catálogo e envie a sugestão.
+    </p>
+  </header>
+
+  <div *ngIf="carregando" class="loading-state">Carregando formulário...</div>
+
+  <ng-container *ngIf="!carregando">
+    <div class="alert alert--error" *ngIf="erroGeral">{{ erroGeral }}</div>
+
+    <section class="status-panel" *ngIf="possuiChamadoAberto">
+      <div>
+        <span class="status-badge status-badge--pending">Chamado em aberto</span>
+        <h2>Você já possui um chamado aberto de sugestão de nova trilha</h2>
+        <p>
+          O backend permite apenas um chamado aberto do tipo nova trilha por aluno.
+          Você ainda pode consultar o histórico abaixo.
+        </p>
+      </div>
+    </section>
+
+    <section class="form-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Nova sugestão</h2>
+          <p>O catálogo abaixo mostra as disciplinas ativas cadastradas no sistema.</p>
+        </div>
+        <span class="panel-count">{{ disciplinasSelecionadasIds.length }}/4 disciplinas</span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="enviarSugestao()" novalidate>
+        <div class="field-grid">
+          <div class="field-group">
+            <label for="nome-trilha">Nome da trilha</label>
+            <input
+              id="nome-trilha"
+              type="text"
+              formControlName="nome"
+              placeholder="Ex.: Computação Quântica Aplicada"
+              (input)="limparErrosGerais()"
+            />
+            <p class="field-error" *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">
+              Informe o nome da trilha.
+            </p>
+            <p class="field-error" *ngIf="erros['nome']">{{ erros['nome'] }}</p>
+          </div>
+
+          <div class="field-group">
+            <label for="filtro-disciplina">Pesquisar disciplina</label>
+            <input
+              id="filtro-disciplina"
+              type="text"
+              [(ngModel)]="filtroDisciplina"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Buscar por nome, código ou tipo"
+              (input)="limparErrosGerais()"
+            />
+            <p class="field-help">
+              A busca é instantânea sobre o catálogo carregado.
+            </p>
+          </div>
+        </div>
+
+        <div class="selection-panel">
+          <div class="selection-panel__header">
+            <div>
+              <h3>Catálogo de disciplinas</h3>
+              <p>Selecione entre 1 e 4 disciplinas para compor a trilha proposta.</p>
+            </div>
+            <span class="panel-count">{{ disciplinasFiltradas.length }} resultados</span>
+          </div>
+
+          <div class="disciplina-list" *ngIf="disciplinasFiltradas.length; else semResultados">
+            <label
+              class="disciplina-item"
+              *ngFor="let disciplina of disciplinasFiltradas"
+              [class.disciplina-item--selecionada]="disciplinaSelecionada(disciplina.id)"
+              [class.disciplina-item--desabilitada]="disciplinaDesabilitada(disciplina.id)"
+            >
+              <input
+                type="checkbox"
+                [checked]="disciplinaSelecionada(disciplina.id)"
+                [disabled]="disciplinaDesabilitada(disciplina.id)"
+                (change)="toggleDisciplina(disciplina.id, $event)"
+              />
+              <div>
+                <strong>{{ disciplina.codigo }} · {{ disciplina.nome }}</strong>
+                <p>
+                  {{ formatarTipo(disciplina.tipo) }} · {{ disciplina.carga_horaria }}h
+                </p>
+              </div>
+            </label>
+          </div>
+
+          <ng-template #semResultados>
+            <div class="empty-inline">
+              Nenhuma disciplina corresponde ao filtro informado.
+            </div>
+          </ng-template>
+
+          <p class="field-error" *ngIf="erros['disciplinas_ids']">{{ erros['disciplinas_ids'] }}</p>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="enviando"
+          >
+            {{ enviando ? 'Enviando...' : 'Enviar sugestão' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="history-panel" *ngIf="sugestoes.length">
+      <div class="panel-heading">
+        <div>
+          <h2>Histórico de sugestões</h2>
+          <p>Consulte as sugestões de trilha já registradas por você.</p>
+        </div>
+      </div>
+
+      <div class="history-list">
+        <article class="history-card" *ngFor="let sugestao of sugestoes">
+          <div class="history-card__header">
+            <div>
+              <strong>{{ sugestao.nome_proposto }}</strong>
+              <p>{{ sugestao.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <span
+              class="status-badge"
+              [class.status-badge--pending]="sugestao.chamado.status === 'ABERTO'"
+              [class.status-badge--accepted]="sugestao.chamado.status === 'FECHADO'"
+            >
+              {{ formatarStatusChamado(sugestao.chamado.status) }}
+            </span>
+          </div>
+
+          <p class="history-card__subject">
+            Chamado #{{ sugestao.chamado.id }} · {{ sugestao.chamado.assunto }}
+          </p>
+
+          <ul class="history-card__disciplinas">
+            <li *ngFor="let disciplina of sugestao.disciplinas">
+              {{ disciplina.codigo }} - {{ disciplina.nome }}
+            </li>
+          </ul>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+
+  <div
+    class="modal-backdrop"
+    *ngIf="sugestaoConfirmada"
+    (click)="fecharModalConfirmacao()"
+  ></div>
+
+  <aside
+    class="confirm-modal"
+    *ngIf="sugestaoConfirmada as sugestao"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="confirmacao-sugestao-titulo"
+  >
+    <span class="status-badge status-badge--accepted">Enviado</span>
+    <h2 id="confirmacao-sugestao-titulo">Sugestão enviada com sucesso</h2>
+    <p>
+      Sua sugestão foi registrada e encaminhada para avaliação da COMGRAD.
+    </p>
+
+    <dl class="confirm-modal__summary">
+      <div>
+        <dt>Trilha proposta</dt>
+        <dd>{{ sugestao.nome_proposto }}</dd>
+      </div>
+      <div>
+        <dt>Chamado aberto</dt>
+        <dd>#{{ sugestao.chamado.id }}</dd>
+      </div>
+      <div>
+        <dt>Disciplinas selecionadas</dt>
+        <dd>{{ sugestao.disciplinas.length }}</dd>
+      </div>
+    </dl>
+
+    <ul class="confirm-modal__disciplinas">
+      <li *ngFor="let disciplina of sugestao.disciplinas">
+        {{ disciplina.codigo }} - {{ disciplina.nome }}
+      </li>
+    </ul>
+
+    <div class="form-actions form-actions--modal">
+      <button type="button" class="btn-primary" (click)="fecharModalConfirmacao()">
+        OK
+      </button>
+    </div>
+  </aside>
+
+  <div
+    class="modal-backdrop"
+    *ngIf="erroModalMensagem"
+    (click)="fecharModalErro()"
+  ></div>
+
+  <aside
+    class="confirm-modal confirm-modal--error"
+    *ngIf="erroModalMensagem"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="erro-sugestao-titulo"
+  >
+    <span class="status-badge status-badge--rejected">Problema no envio</span>
+    <h2 id="erro-sugestao-titulo">{{ erroModalTitulo }}</h2>
+    <p>{{ erroModalMensagem }}</p>
+
+    <div class="form-actions form-actions--modal">
+      <button type="button" class="btn-primary" (click)="fecharModalErro()">
+        OK
+      </button>
+    </div>
+  </aside>
+</section>

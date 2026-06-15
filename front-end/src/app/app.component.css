@@ -3,6 +3,10 @@
   min-height: 100vh;
 }
 
+:root {
+  --topbar-height: 92px;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -59,7 +63,7 @@
 
 .tabs-nav {
   position: sticky;
-  top: 92px;
+  top: var(--topbar-height);
   z-index: 25;
   display: flex;
   flex-wrap: wrap;

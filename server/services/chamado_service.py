@@ -27,10 +27,15 @@ class ChamadoService:
         if any(
             c.aluno_id == aluno_id and c.tipo == dados.tipo for c in chamados_abertos
         ):
+            detalhe_tipo = (
+                "para sugestão de trilha"
+                if dados.tipo.value == "NOVA_TRILHA"
+                else f"do tipo {dados.tipo.value}"
+            )
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    f"Você já possui um chamado em aberto do tipo {dados.tipo.value}. "
+                    f"Você já possui um chamado em aberto {detalhe_tipo}. "
                     "Aguarde a resposta antes de abrir outro do mesmo tipo."
                 ),
             )

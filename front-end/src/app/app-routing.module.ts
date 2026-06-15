@@ -7,6 +7,8 @@ import { TrilhasListComponent } from './components/trilhas-list/trilhas-list.com
 import { NotImplementedComponent } from './components/not-implemented/not-implemented.component';
 import { GerenciarTrilhasComponent } from './components/gerenciar-trilhas/gerenciar-trilhas.component';
 import { SolicitarTrilhasComponent } from './components/solicitar-trilhas/solicitar-trilhas.component';
+import { CurriculoVigenteComponent } from './components/curriculo-vigente/curriculo-vigente.component';
+import { SugerirTrilhasComponent } from './components/sugerir-trilhas/sugerir-trilhas.component';
 
 import { ChamadoComgradComponent } from './components/chamado-comgrad/chamado-comgrad.component';
 import { ComgradPainelComponent } from './components/comgrad-painel/comgrad-painel.component';
@@ -17,6 +19,12 @@ const routes: Routes = [
   { path: 'trilhas', component: TrilhasListComponent, canActivate: [AuthGuard] },
   { path: 'curriculo', component: CurriculoComponent, canActivate: [AuthGuard] },
   {
+    path: 'curriculo-vigente',
+    component: CurriculoVigenteComponent,
+    canActivate: [AuthGuard],
+    data: { title: 'Currículo vigente' },
+  },
+  {
     path: 'solicitar-trilhas',
     component: SolicitarTrilhasComponent,
     canActivate: [AuthGuard],
@@ -24,7 +32,7 @@ const routes: Routes = [
   },
   {
     path: 'sugerir-trilhas',
-    component: NotImplementedComponent,
+    component: SugerirTrilhasComponent,
     canActivate: [AuthGuard],
     data: { title: 'Sugerir novas trilhas' },
   },
