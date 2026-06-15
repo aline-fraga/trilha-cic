@@ -19,6 +19,7 @@ from server.models import (
     Pergunta,
     PerguntaTrilhaPeso,
     Trilha,
+    solicitacao_trilhas_candidatas,
     trilha_disciplinas,
 )
 from server.models.aluno import Aluno
@@ -150,6 +151,7 @@ USERS_SEED = [
 def main() -> None:
     db = SessionLocal()
     try:
+        db.execute(delete(solicitacao_trilhas_candidatas))
         db.execute(delete(Solicitacao))
         db.execute(delete(PerguntaTrilhaPeso))
         db.execute(delete(Pergunta))
@@ -233,6 +235,8 @@ def main() -> None:
         )
         total_trilhas = len(trilhas_db)
         for idx, aluno_user in enumerate(alunos):
+            if aluno_user.nome == "Pedro Diello":
+                continue
             candidatas = [
                 trilhas_db[idx % total_trilhas],
                 trilhas_db[(idx + 1) % total_trilhas],

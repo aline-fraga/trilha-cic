@@ -17,6 +17,18 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
+  "/perguntas": {
+    "target": "http://localhost:8000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/solicitacoes": {
+    "target": "http://localhost:8000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
   "/chamados": {
     "target": "http://localhost:8000",
     "secure": false,

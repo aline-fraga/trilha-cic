@@ -1,0 +1,193 @@
+<section class="page-shell">
+  <header class="hero">
+    <div class="hero__top">
+      <img
+        class="hero__logo"
+        src="/logo-inf-ufrgs.png"
+        alt="Logo oficial do Instituto de Informática da UFRGS"
+      />
+      <div>
+        <div class="hero__eyebrow">UFRGS - INSTITUTO DE INFORMÁTICA</div>
+        <h1>Solicitação de trilha</h1>
+      </div>
+    </div>
+    <p>
+      Responda ao questionário vocacional para solicitar uma trilha acadêmica
+      personalizada.
+    </p>
+  </header>
+
+  <div *ngIf="carregando" class="loading-state">Carregando formulário...</div>
+
+  <ng-container *ngIf="!carregando">
+    <div class="alert alert--success" *ngIf="mensagemSucesso">{{ mensagemSucesso }}</div>
+    <div class="alert alert--error" *ngIf="erroGeral">{{ erroGeral }}</div>
+
+    <section class="status-panel" *ngIf="solicitacaoAceita">
+      <div>
+        <span class="status-badge status-badge--accepted">Aceita</span>
+        <h2>Você já possui uma trilha aceita</h2>
+        <p *ngIf="solicitacaoAceita.trilha_aceita">
+          Trilha confirmada: <strong>{{ solicitacaoAceita.trilha_aceita.nome }}</strong>
+        </p>
+      </div>
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="baixarMaterial(solicitacaoAceita)"
+        [disabled]="baixandoMaterialId === solicitacaoAceita.id"
+      >
+        {{ baixandoMaterialId === solicitacaoAceita.id ? 'Baixando...' : 'Baixar material' }}
+      </button>
+    </section>
+
+    <section class="status-panel" *ngIf="solicitacaoPendente">
+      <div>
+        <span class="status-badge status-badge--pending">Pendente</span>
+        <h2>Sua solicitação atual está em análise</h2>
+        <p>
+          Revise as trilhas candidatas e escolha uma opção ou rejeite o conjunto
+          para abrir atendimento com a COMGRAD.
+        </p>
+      </div>
+    </section>
+
+    <section class="form-panel" *ngIf="!solicitacaoAceita">
+      <div class="panel-heading">
+        <div>
+          <h2>Questionário</h2>
+          <p>Escala de interesse: 0 = nenhum interesse, 5 = altíssimo interesse.</p>
+          <p class="field-help" *ngIf="solicitacaoPendente">
+            Você já possui uma solicitação pendente. O questionário permanece visível, mas está bloqueado até a resolução da solicitação atual.
+          </p>
+        </div>
+        <span class="panel-count">{{ perguntas.length }} perguntas</span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="enviarSolicitacao()" novalidate>
+        <div class="questions-list" *ngIf="perguntas.length; else semPerguntas">
+          <article class="question-card" *ngFor="let pergunta of perguntas; let i = index">
+            <div class="question-card__header">
+              <span class="question-card__type">{{ tipoPerguntaLabel(pergunta.tipo) }}</span>
+              <span class="question-card__order">Pergunta {{ i + 1 }}</span>
+            </div>
+
+            <h3>{{ pergunta.enunciado }}</h3>
+
+            <div class="scale-grid">
+              <button
+                type="button"
+                class="scale-option"
+                *ngFor="let item of escalaResposta"
+                [class.scale-option--selected]="respostaSelecionada(i, item.valor)"
+                [disabled]="questionarioBloqueado"
+                (click)="selecionarResposta(i, item.valor)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+
+            <p class="field-error" *ngIf="respostasArray.at(i).invalid && respostasArray.at(i).touched">
+              Selecione um valor para esta pergunta.
+            </p>
+          </article>
+        </div>
+
+        <ng-template #semPerguntas>
+          <div class="empty-state">
+            <h2>Questionário indisponível</h2>
+            <p>Não há perguntas ativas cadastradas no momento.</p>
+          </div>
+        </ng-template>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="enviando || !podeEnviarNovaSolicitacao || !perguntas.length"
+          >
+            {{ enviando ? 'Enviando...' : 'Solicitar trilha' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results-panel" *ngIf="solicitacaoPendente">
+      <div class="panel-heading">
+        <div>
+          <h2>Trilhas candidatas</h2>
+          <p>Escolha a trilha que melhor representa seu perfil atual.</p>
+        </div>
+      </div>
+
+      <div class="candidate-grid">
+        <article class="candidate-card" *ngFor="let trilha of solicitacaoPendente.trilhas_candidatas">
+          <div class="candidate-card__body">
+            <h3>{{ trilha.nome }}</h3>
+            <p>{{ trilha.resumo }}</p>
+            <ul>
+              <li *ngFor="let disciplina of trilha.disciplinas">
+                {{ disciplina.codigo }} - {{ disciplina.nome }}
+              </li>
+            </ul>
+          </div>
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="aceitarTrilha(solicitacaoPendente, trilha)"
+            [disabled]="processandoAcaoId === solicitacaoPendente.id"
+          >
+            Aceitar esta trilha
+          </button>
+        </article>
+      </div>
+
+      <div class="form-actions form-actions--split">
+        <span class="field-help">Se nenhuma opção fizer sentido, rejeite as trilhas sugeridas.</span>
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="rejeitarTrilhas(solicitacaoPendente)"
+          [disabled]="processandoAcaoId === solicitacaoPendente.id"
+        >
+          {{ processandoAcaoId === solicitacaoPendente.id ? 'Processando...' : 'Rejeitar trilhas sugeridas' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="history-panel" *ngIf="solicitacoes.length">
+      <div class="panel-heading">
+        <div>
+          <h2>Histórico de solicitações</h2>
+          <p>Acompanhe as solicitações já enviadas.</p>
+        </div>
+      </div>
+
+      <div class="history-list">
+        <article class="history-card" *ngFor="let solicitacao of solicitacoes">
+          <div class="history-card__header">
+            <div>
+              <strong>Solicitação #{{ solicitacao.id }}</strong>
+              <p>{{ solicitacao.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <span
+              class="status-badge"
+              [class.status-badge--pending]="solicitacao.status === 'PENDENTE'"
+              [class.status-badge--accepted]="solicitacao.status === 'ACEITA'"
+              [class.status-badge--rejected]="solicitacao.status === 'REJEITADA'"
+            >
+              {{ statusLabel(solicitacao.status) }}
+            </span>
+          </div>
+
+          <p *ngIf="solicitacao.trilha_aceita">
+            Trilha aceita: <strong>{{ solicitacao.trilha_aceita.nome }}</strong>
+          </p>
+          <p *ngIf="!solicitacao.trilha_aceita">
+            {{ solicitacao.trilhas_candidatas.length }} trilha(s) candidata(s) avaliadas.
+          </p>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+</section>

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Disciplina, DisciplinaCreate, DisciplinaUpdate } from '../models/disciplina';
@@ -9,19 +9,23 @@ export class DisciplinaService {
 
   constructor(private readonly http: HttpClient) {}
 
-  listar(): Observable<Disciplina[]> {
-    return this.http.get<Disciplina[]>(this.url);
+  listar(isActive?: boolean): Observable<Disciplina[]> {
+    let params = new HttpParams();
+    if (isActive !== undefined) {
+      params = params.set('is_active', isActive);
+    }
+    return this.http.get<Disciplina[]>(`${this.url}/get`, { params });
   }
 
   criar(data: DisciplinaCreate): Observable<Disciplina> {
-    return this.http.post<Disciplina>(this.url, data);
+    return this.http.post<Disciplina>(`${this.url}/create`, data);
   }
 
   atualizar(id: number, data: DisciplinaUpdate): Observable<Disciplina> {
-    return this.http.put<Disciplina>(`${this.url}/${id}`, data);
+    return this.http.put<Disciplina>(`${this.url}/update/${id}`, data);
   }
 
   excluir(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${id}`);
+    return this.http.delete<void>(`${this.url}/delete/${id}`);
   }
 }

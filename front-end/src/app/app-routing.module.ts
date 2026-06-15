@@ -6,6 +6,7 @@ import { LoginComponent } from './components/login/login.component';
 import { TrilhasListComponent } from './components/trilhas-list/trilhas-list.component';
 import { NotImplementedComponent } from './components/not-implemented/not-implemented.component';
 import { GerenciarTrilhasComponent } from './components/gerenciar-trilhas/gerenciar-trilhas.component';
+import { SolicitarTrilhasComponent } from './components/solicitar-trilhas/solicitar-trilhas.component';
 
 import { ChamadoComgradComponent } from './components/chamado-comgrad/chamado-comgrad.component';
 import { ComgradPainelComponent } from './components/comgrad-painel/comgrad-painel.component';
@@ -17,7 +18,7 @@ const routes: Routes = [
   { path: 'curriculo', component: CurriculoComponent, canActivate: [AuthGuard] },
   {
     path: 'solicitar-trilhas',
-    component: NotImplementedComponent,
+    component: SolicitarTrilhasComponent,
     canActivate: [AuthGuard],
     data: { title: 'Solicitar trilhas' },
   },

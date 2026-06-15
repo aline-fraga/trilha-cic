@@ -13,6 +13,7 @@ import { TrilhaCardComponent } from './components/trilha-card/trilha-card.compon
 import { DisciplinaCardComponent } from './components/disciplina-card/disciplina-card.component';
 import { NotImplementedComponent } from './components/not-implemented/not-implemented.component';
 import { GerenciarTrilhasComponent } from './components/gerenciar-trilhas/gerenciar-trilhas.component';
+import { SolicitarTrilhasComponent } from './components/solicitar-trilhas/solicitar-trilhas.component';
 
 @NgModule({
   declarations: [
@@ -24,6 +25,7 @@ import { GerenciarTrilhasComponent } from './components/gerenciar-trilhas/gerenc
     DisciplinaCardComponent,
     NotImplementedComponent,
     GerenciarTrilhasComponent,
+    SolicitarTrilhasComponent,
   ],
   imports: [
     BrowserModule,
