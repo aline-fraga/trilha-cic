@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Disciplina } from '../../models/disciplina';
+import { Pergunta } from '../../models/pergunta';
 import { Trilha } from '../../models/trilha';
 import { DisciplinaService } from '../../services/disciplina.service';
 import { GerenciarTrilhasService } from '../../services/gerenciar-trilhas.service';
+import { PerguntasService } from '../../services/perguntas.service';
 
 @Component({
   selector: 'app-gerenciar-trilhas',
@@ -14,8 +16,10 @@ import { GerenciarTrilhasService } from '../../services/gerenciar-trilhas.servic
 export class GerenciarTrilhasComponent implements OnInit {
   trilhas: Trilha[] = [];
   disciplinas: Disciplina[] = [];
+  perguntasAtivas: Pergunta[] = [];
   editando: Trilha | null = null;
   mostrarFormulario = false;
+  salvando = false;
   erroGeral = '';
   erros: Record<string, string> = {};
   form!: FormGroup;
@@ -23,13 +27,15 @@ export class GerenciarTrilhasComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly trilhasService: GerenciarTrilhasService,
-    private readonly disciplinaService: DisciplinaService
+    private readonly disciplinaService: DisciplinaService,
+    private readonly perguntasService: PerguntasService
   ) {}
 
   ngOnInit(): void {
     this.inicializarForm();
     this.carregarTrilhas();
     this.carregarDisciplinas();
+    this.carregarPerguntasAtivas();
   }
 
   private inicializarForm(trilha?: Trilha): void {
@@ -56,6 +62,13 @@ export class GerenciarTrilhasComponent implements OnInit {
     });
   }
 
+  private carregarPerguntasAtivas(): void {
+    this.perguntasService.listar(true).subscribe({
+      next: (perguntas) => (this.perguntasAtivas = perguntas),
+      error: () => {},
+    });
+  }
+
   abrirCadastro(): void {
     this.editando = null;
     this.inicializarForm();
@@ -71,6 +84,7 @@ export class GerenciarTrilhasComponent implements OnInit {
   fecharFormulario(): void {
     this.mostrarFormulario = false;
     this.editando = null;
+    this.salvando = false;
   }
 
   salvar(): void {
@@ -85,20 +99,24 @@ export class GerenciarTrilhasComponent implements OnInit {
     }
     this.erros = {};
     this.erroGeral = '';
+    this.salvando = true;
 
     const valor = this.form.value;
+    const payload = this.editando ? valor : this.montarPayloadCriacao(valor);
 
     const request$ = this.editando
-      ? this.trilhasService.atualizar(this.editando.id, valor)
-      : this.trilhasService.criar(valor);
+      ? this.trilhasService.atualizar(this.editando.id, payload)
+      : this.trilhasService.criar(payload);
 
     request$.subscribe({
       next: () => {
+        this.salvando = false;
         this.fecharFormulario();
         this.carregarTrilhas();
       },
       error: (err) => {
-        const detail = err?.error?.detail;
+        this.salvando = false;
+        const detail = this.extrairMensagemErro(err);
         if (detail?.campo) {
           this.erros[detail.campo] = detail.mensagem;
         } else {
@@ -133,6 +151,7 @@ export class GerenciarTrilhasComponent implements OnInit {
   toggleDisciplina(id: number, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     const atual: number[] = [...(this.form.get('disciplinas_ids')?.value ?? [])];
+    this.erroGeral = '';
     if (checked) {
       this.form.get('disciplinas_ids')?.setValue([...atual, id]);
     } else {
@@ -144,5 +163,44 @@ export class GerenciarTrilhasComponent implements OnInit {
     return trilha.disciplinas.length > 0
       ? trilha.disciplinas.map((d) => d.codigo).join(', ')
       : '—';
+  }
+
+  limparErroGeral(): void {
+    this.erroGeral = '';
+  }
+
+  private extrairMensagemErro(err: any): any {
+    const detail = err?.error?.detail;
+
+    if (typeof detail === 'string') {
+      return detail;
+    }
+
+    if (detail?.campo && detail?.mensagem) {
+      return detail;
+    }
+
+    if (Array.isArray(detail) && detail.length > 0) {
+      return detail
+        .map((item) => item?.msg ?? item?.message)
+        .filter(Boolean)
+        .join(' ');
+    }
+
+    return null;
+  }
+
+  private montarPayloadCriacao(valor: {
+    nome: string;
+    resumo: string;
+    disciplinas_ids: number[];
+  }) {
+    return {
+      ...valor,
+      pesos: this.perguntasAtivas.map((pergunta) => ({
+        pergunta_id: pergunta.id,
+        peso: 0,
+      })),
+    };
   }
 }

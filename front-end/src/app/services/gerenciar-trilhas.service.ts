@@ -7,6 +7,10 @@ export interface TrilhaCreate {
   nome: string;
   resumo: string;
   disciplinas_ids: number[];
+  pesos: Array<{
+    pergunta_id: number;
+    peso: number;
+  }>;
 }
 
 export interface TrilhaUpdate {
