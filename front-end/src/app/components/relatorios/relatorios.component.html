@@ -1,0 +1,240 @@
+<section class="page-shell">
+  <header class="hero">
+    <div class="hero__top">
+      <img
+        class="hero__logo"
+        src="/logo-inf-ufrgs.png"
+        alt="Logo oficial do Instituto de Informática da UFRGS"
+      />
+      <div>
+        <div class="hero__eyebrow">COMGRAD - RELATÓRIOS DE DEMANDA</div>
+        <h1>Relatórios de trilhas</h1>
+      </div>
+    </div>
+    <p>
+      Gere snapshots da demanda por trilhas em períodos fechados e baixe o PDF
+      oficial para prestação de contas da COMGRAD.
+    </p>
+  </header>
+
+  <div *ngIf="carregando" class="loading-state">Carregando relatórios...</div>
+
+  <ng-container *ngIf="!carregando">
+    <div class="alert alert--success" *ngIf="mensagemSucesso">{{ mensagemSucesso }}</div>
+    <div class="alert alert--error" *ngIf="erroGeral">{{ erroGeral }}</div>
+
+    <section class="status-panel" *ngIf="ultimoRelatorioGeradoId && relatorioSelecionado">
+      <div>
+        <span class="status-badge">Relatório pronto</span>
+        <h2>O relatório #{{ ultimoRelatorioGeradoId }} foi gerado</h2>
+        <p>Você já pode baixar o PDF oficial deste snapshot.</p>
+      </div>
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="baixarPdfDoSelecionado()"
+        [disabled]="baixandoPdfId === relatorioSelecionado.id"
+      >
+        {{ baixandoPdfId === relatorioSelecionado.id ? 'Baixando...' : 'Baixar PDF agora' }}
+      </button>
+    </section>
+
+    <section class="form-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Gerar novo relatório</h2>
+          <p>Considere apenas períodos encerrados. Solicitações pendentes ficam fora do cálculo.</p>
+        </div>
+      </div>
+
+      <form [formGroup]="form" (submit)="onSubmit($event)" novalidate>
+        <div class="filters-grid">
+          <div class="form-group">
+            <label class="form-label" for="periodo_inicio">Período inicial</label>
+            <input
+              id="periodo_inicio"
+              type="datetime-local"
+              class="form-control"
+              formControlName="periodo_inicio"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="periodo_fim">Período final</label>
+            <input
+              id="periodo_fim"
+              type="datetime-local"
+              class="form-control"
+              formControlName="periodo_fim"
+            />
+          </div>
+        </div>
+
+        <p class="field-error" *ngIf="form.invalid && (form.touched || form.dirty)">
+          Preencha o período inicial e final antes de gerar o relatório.
+        </p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="gerando">
+            {{ gerando ? 'Gerando...' : 'Gerar relatório' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="content-grid">
+      <section class="history-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Histórico</h2>
+            <p>Relatórios já gerados para consulta e download.</p>
+          </div>
+          <span class="panel-count">{{ relatorios.length }} item(ns)</span>
+        </div>
+
+        <div class="history-list" *ngIf="relatorios.length; else semRelatorios">
+          <article
+            class="history-card"
+            *ngFor="let relatorio of relatorios; trackBy: trackByRelatorioId"
+            [class.history-card--active]="relatorioSelecionado?.id === relatorio.id"
+          >
+            <div class="history-card__header">
+              <div>
+                <strong>Relatório #{{ relatorio.id }}</strong>
+                <p>Gerado em {{ relatorio.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+              <span class="status-badge">
+                {{ relatorio.total_solicitacoes }} solicitações
+              </span>
+            </div>
+
+            <p>
+              Período:
+              <strong>
+                {{ relatorio.periodo_inicio | date:'dd/MM/yyyy HH:mm' }}
+              </strong>
+              até
+              <strong>
+                {{ relatorio.periodo_fim | date:'dd/MM/yyyy HH:mm' }}
+              </strong>
+            </p>
+
+            <div class="history-metrics">
+              <span>Aceites: {{ relatorio.total_aceites }}</span>
+              <span>Rejeições: {{ relatorio.total_rejeicoes }}</span>
+            </div>
+
+            <div class="card-actions">
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="selecionarRelatorio(relatorio.id)"
+              >
+                Ver detalhes
+              </button>
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="baixarPdf(relatorio)"
+                [disabled]="baixandoPdfId === relatorio.id"
+              >
+                {{ baixandoPdfId === relatorio.id ? 'Baixando...' : 'Baixar PDF' }}
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #semRelatorios>
+          <div class="empty-state">
+            <h3>Nenhum relatório gerado</h3>
+            <p>Use o formulário acima para criar o primeiro snapshot de demanda.</p>
+          </div>
+        </ng-template>
+      </section>
+
+      <section class="details-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Detalhes do relatório</h2>
+            <p>Resumo consolidado e distribuição por trilha.</p>
+          </div>
+          <button
+            type="button"
+            class="btn-secondary"
+            *ngIf="relatorioSelecionado"
+            (click)="baixarPdf(relatorioSelecionado)"
+            [disabled]="baixandoPdfId === relatorioSelecionado.id"
+          >
+            {{ baixandoPdfId === relatorioSelecionado.id ? 'Baixando...' : 'Baixar PDF' }}
+          </button>
+        </div>
+
+        <div *ngIf="carregandoDetalhes" class="loading-state loading-state--inline">
+          Carregando detalhes...
+        </div>
+
+        <ng-container *ngIf="!carregandoDetalhes && relatorioSelecionado; else semDetalhes">
+          <div class="summary-grid">
+            <article class="summary-card">
+              <span>Total</span>
+              <strong>{{ relatorioSelecionado.total_solicitacoes }}</strong>
+              <small>solicitações resolvidas</small>
+            </article>
+            <article class="summary-card">
+              <span>Aceites</span>
+              <strong>{{ relatorioSelecionado.total_aceites }}</strong>
+              <small>trilhas confirmadas</small>
+            </article>
+            <article class="summary-card">
+              <span>Rejeições</span>
+              <strong>{{ relatorioSelecionado.total_rejeicoes }}</strong>
+              <small>pedidos recusados</small>
+            </article>
+          </div>
+
+          <div class="detail-meta">
+            <p><strong>Relatório:</strong> #{{ relatorioSelecionado.id }}</p>
+            <p>
+              <strong>Período:</strong>
+              {{ relatorioSelecionado.periodo_inicio | date:'dd/MM/yyyy HH:mm' }}
+              até
+              {{ relatorioSelecionado.periodo_fim | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+
+          <div class="table-wrapper" *ngIf="relatorioSelecionado.itens.length; else semItens">
+            <table>
+              <thead>
+                <tr>
+                  <th>Trilha</th>
+                  <th>Aceites</th>
+                  <th>Rejeições</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of relatorioSelecionado.itens">
+                  <td>{{ item.trilha.nome }}</td>
+                  <td>{{ item.aceites }}</td>
+                  <td>{{ item.rejeicoes }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ng-template #semItens>
+            <div class="empty-inline">
+              Nenhuma trilha ativa apareceu com movimentação neste período.
+            </div>
+          </ng-template>
+        </ng-container>
+
+        <ng-template #semDetalhes>
+          <div class="empty-state">
+            <h3>Nenhum relatório selecionado</h3>
+            <p>Selecione um item do histórico para visualizar os dados detalhados.</p>
+          </div>
+        </ng-template>
+      </section>
+    </section>
+  </ng-container>
+</section>

@@ -37,6 +37,10 @@ export class ChamadoService {
     return this.http.post<Chamado>(this.apiUrl, dados);
   }
 
+  editarMensagem(id: number, mensagem: string): Observable<Chamado> {
+    return this.http.patch<Chamado>(`${this.apiUrl}/${id}`, { mensagem });
+  }
+
   responderChamado(id: number, resposta: string): Observable<Chamado> {
     return this.http.put<Chamado>(`${this.apiUrl}/${id}/responder`, { resposta });
   }

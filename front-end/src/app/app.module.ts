@@ -16,6 +16,8 @@ import { GerenciarTrilhasComponent } from './components/gerenciar-trilhas/gerenc
 import { SolicitarTrilhasComponent } from './components/solicitar-trilhas/solicitar-trilhas.component';
 import { CurriculoVigenteComponent } from './components/curriculo-vigente/curriculo-vigente.component';
 import { SugerirTrilhasComponent } from './components/sugerir-trilhas/sugerir-trilhas.component';
+import { GerenciarUsuariosComponent } from './components/gerenciar-usuarios/gerenciar-usuarios.component';
+import { RelatoriosComponent } from './components/relatorios/relatorios.component';
 
 @NgModule({
   declarations: [
@@ -27,9 +29,11 @@ import { SugerirTrilhasComponent } from './components/sugerir-trilhas/sugerir-tr
     DisciplinaCardComponent,
     NotImplementedComponent,
     GerenciarTrilhasComponent,
+    GerenciarUsuariosComponent,
     SolicitarTrilhasComponent,
     CurriculoVigenteComponent,
     SugerirTrilhasComponent,
+    RelatoriosComponent,
   ],
   imports: [
     BrowserModule,

@@ -1,59 +1,29 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Relatorio, RelatorioCreateRequest } from '../models/relatorio';
 
-export interface TrilhaBrief {
-  id: number;
-  nome: string;
-}
-
-export interface RelatorioItem {
-  trilha_id: number;
-  aceites: number;
-  rejeicoes: number;
-  trilha: TrilhaBrief;
-}
-
-export interface RelatorioResponse {
-  id: number;
-  gerado_por_id: number;
-  periodo_inicio: string;
-  periodo_fim: string;
-  total_solicitacoes: number;
-  total_aceites: number;
-  total_rejeicoes: number;
-  created_at: string;
-  itens: RelatorioItem[];
-}
-
-export interface RelatorioCreate {
-  periodo_inicio: string;
-  periodo_fim: string;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class RelatoriosService {
-  private readonly baseUrl = 'relatorios';
+  private readonly url = '/relatorios';
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
-  listarRelatorios(): Observable<RelatorioResponse[]> {
-    return this.http.get<RelatorioResponse[]>(`${this.baseUrl}/get`);
+  listar(): Observable<Relatorio[]> {
+    return this.http.get<Relatorio[]>(`${this.url}/get`);
   }
 
-  obterRelatorio(id: number): Observable<RelatorioResponse> {
-    return this.http.get<RelatorioResponse>(`${this.baseUrl}/get/${id}`);
+  obter(relatorioId: number): Observable<Relatorio> {
+    return this.http.get<Relatorio>(`${this.url}/get/${relatorioId}`);
   }
 
-  gerarRelatorio(payload: RelatorioCreate): Observable<RelatorioResponse> {
-    return this.http.post<RelatorioResponse>(`${this.baseUrl}/create`, payload);
+  criar(payload: RelatorioCreateRequest): Observable<Relatorio> {
+    return this.http.post<Relatorio>(`${this.url}/create`, payload);
   }
 
-  baixarPdf(id: number): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/get/${id}/pdf`, {
-      responseType: 'blob'
+  baixarPdf(relatorioId: number): Observable<Blob> {
+    return this.http.get(`${this.url}/get/${relatorioId}/pdf`, {
+      responseType: 'blob',
     });
   }
 }

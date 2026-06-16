@@ -1,0 +1,180 @@
+<section class="page-shell">
+  <header class="hero">
+    <div class="hero__top">
+      <div>
+        <h1>Gestão de Usuários</h1>
+        <p>Cadastre, edite e desative contas de acesso do sistema.</p>
+      </div>
+      <button class="btn-primary" type="button" (click)="abrirCadastro()">
+        + Novo usuário
+      </button>
+    </div>
+  </header>
+
+  <section class="form-panel usuarios-panel">
+    <div class="filtros-bar">
+      <select class="form-control" [(ngModel)]="filtroRole" (change)="carregarUsuarios()">
+        <option value="">Todos os perfis</option>
+        <option *ngFor="let role of roles" [value]="role">{{ roleLabel(role) }}</option>
+      </select>
+
+      <select class="form-control" [(ngModel)]="filtroStatus" (change)="carregarUsuarios()">
+        <option [ngValue]="true">Apenas ativos</option>
+        <option [ngValue]="false">Apenas inativos</option>
+        <option [ngValue]="''">Todos os status</option>
+      </select>
+    </div>
+
+    <p class="alert alert--error" *ngIf="erroGeral">{{ erroGeral }}</p>
+    <div class="loading-state" *ngIf="carregando">Carregando usuários...</div>
+
+    <ng-container *ngIf="!carregando">
+      <div class="table-wrapper" *ngIf="usuarios.length > 0; else semUsuarios">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Perfil</th>
+              <th>Dados do aluno</th>
+              <th>Status</th>
+              <th>Criado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of usuarios">
+              <td>{{ usuario.nome }}</td>
+              <td>{{ usuario.email }}</td>
+              <td>
+                <span class="pill pill--role">{{ roleLabel(usuario.role) }}</span>
+              </td>
+              <td>{{ alunoLabel(usuario) }}</td>
+              <td>
+                <span class="pill" [class.pill--inactive]="!usuario.is_active">
+                  {{ statusLabel(usuario.is_active) }}
+                </span>
+              </td>
+              <td>{{ usuario.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="acoes">
+                <button class="btn-secondary btn-sm" type="button" (click)="abrirEdicao(usuario)">
+                  Editar
+                </button>
+                <button
+                  class="btn-danger btn-sm"
+                  type="button"
+                  (click)="excluir(usuario)"
+                  [disabled]="!usuario.is_active"
+                >
+                  Desativar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #semUsuarios>
+        <div class="empty-state">Nenhum usuário encontrado para os filtros atuais.</div>
+      </ng-template>
+    </ng-container>
+  </section>
+</section>
+
+<div class="overlay" *ngIf="mostrarFormulario" (click)="fecharFormulario()"></div>
+
+<aside class="painel" *ngIf="mostrarFormulario">
+  <div class="painel__header">
+    <div>
+      <h3>{{ editando ? 'Editar usuário' : 'Novo usuário' }}</h3>
+      <p>{{ editando ? 'Atualize os dados da conta selecionada.' : 'Cadastre um novo acesso ao portal.' }}</p>
+    </div>
+    <button class="btn--fechar" type="button" (click)="fecharFormulario()">✕</button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    <div class="form-group">
+      <label class="form-label" for="nome">Nome *</label>
+      <input id="nome" class="form-control" formControlName="nome" type="text" (input)="limparErroGeral()" />
+      <span class="field-error" *ngIf="campoInvalido('nome')">Informe o nome do usuário.</span>
+      <span class="field-error" *ngIf="erros['nome']">{{ erros['nome'] }}</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="email">E-mail *</label>
+      <input id="email" class="form-control" formControlName="email" type="email" (input)="limparErroGeral()" />
+      <span class="field-error" *ngIf="campoInvalido('email')">Informe um e-mail válido.</span>
+      <span class="field-error" *ngIf="erros['email']">{{ erros['email'] }}</span>
+    </div>
+
+    <div class="form-group" *ngIf="!editando">
+      <label class="form-label" for="password">Senha *</label>
+      <input
+        id="password"
+        class="form-control"
+        formControlName="password"
+        type="password"
+        (input)="limparErroGeral()"
+      />
+      <span class="field-error" *ngIf="campoInvalido('password')">
+        A senha deve ter pelo menos 8 caracteres.
+      </span>
+      <span class="field-error" *ngIf="erros['password']">{{ erros['password'] }}</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="role">Perfil *</label>
+      <select id="role" class="form-control" formControlName="role" (change)="onRoleChange()">
+        <option *ngFor="let role of roles" [value]="role">{{ roleLabel(role) }}</option>
+      </select>
+      <p class="form-hint" *ngIf="editando">O perfil não pode ser alterado após o cadastro.</p>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-field">
+        <input formControlName="is_active" type="checkbox" />
+        Usuário ativo
+      </label>
+    </div>
+
+    <div formGroupName="aluno" *ngIf="exibindoCamposAluno" class="aluno-grid">
+      <div class="form-group">
+        <label class="form-label" for="cartao_ufrgs">Cartão UFRGS *</label>
+        <input
+          id="cartao_ufrgs"
+          class="form-control"
+          formControlName="cartao_ufrgs"
+          type="text"
+          (input)="limparErroGeral()"
+        />
+        <span class="field-error" *ngIf="campoInvalido('aluno.cartao_ufrgs')">
+          Informe o cartão UFRGS.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="semestre_ingresso">Semestre de ingresso *</label>
+        <input
+          id="semestre_ingresso"
+          class="form-control"
+          formControlName="semestre_ingresso"
+          type="text"
+          placeholder="2026/01"
+          (input)="limparErroGeral()"
+        />
+        <span class="field-error" *ngIf="campoInvalido('aluno.semestre_ingresso')">
+          Use o formato `AAAA/NN`.
+        </span>
+      </div>
+    </div>
+
+    <p class="alert alert--error" *ngIf="erroGeral">{{ erroGeral }}</p>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="fecharFormulario()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : 'Salvar usuário' }}
+      </button>
+    </div>
+  </form>
+</aside>

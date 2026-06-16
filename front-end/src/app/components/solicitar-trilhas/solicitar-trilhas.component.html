@@ -46,13 +46,25 @@
         <span class="status-badge status-badge--pending">Pendente</span>
         <h2>Sua solicitação atual está em análise</h2>
         <p>
-          Revise as trilhas candidatas e escolha uma opção ou rejeite o conjunto
-          para abrir atendimento com a COMGRAD.
+          Revise as trilhas candidatas e escolha uma opção ou rejeite o conjunto.
+          Se rejeitar, um chamado será aberto para você complementar com mais
+          detalhes.
         </p>
       </div>
     </section>
 
-    <section class="form-panel" *ngIf="!solicitacaoAceita">
+    <section class="status-panel" *ngIf="chamadoTrilhaRejeitadaAberto">
+      <div>
+        <span class="status-badge status-badge--pending">Chamado em aberto</span>
+        <h2>Seu chamado com a COMGRAD está em aberto</h2>
+        <p>
+          Enquanto esse chamado estiver aberto, o questionário e as trilhas sugeridas
+          ficam ocultos até a resposta da COMGRAD.
+        </p>
+      </div>
+    </section>
+
+    <section class="form-panel" *ngIf="!solicitacaoAceita && !chamadoTrilhaRejeitadaAberto">
       <div class="panel-heading">
         <div>
           <h2>Questionário</h2>
@@ -112,7 +124,10 @@
       </form>
     </section>
 
-    <section class="results-panel" *ngIf="solicitacaoPendente">
+    <section
+      class="results-panel"
+      *ngIf="solicitacaoPendente && !chamadoTrilhaRejeitadaAberto"
+    >
       <div class="panel-heading">
         <div>
           <h2>Trilhas candidatas</h2>
@@ -143,14 +158,14 @@
       </div>
 
       <div class="form-actions form-actions--split">
-        <span class="field-help">Se nenhuma opção fizer sentido, rejeite as trilhas sugeridas.</span>
+        <span class="field-help">Se nenhuma opção fizer sentido, rejeite todas as trilhas.</span>
         <button
           type="button"
           class="btn-secondary"
           (click)="rejeitarTrilhas(solicitacaoPendente)"
           [disabled]="processandoAcaoId === solicitacaoPendente.id"
         >
-          {{ processandoAcaoId === solicitacaoPendente.id ? 'Processando...' : 'Rejeitar trilhas sugeridas' }}
+          {{ processandoAcaoId === solicitacaoPendente.id ? 'Processando...' : 'Rejeitar todas as trilhas' }}
         </button>
       </div>
     </section>
@@ -186,6 +201,60 @@
           <p *ngIf="!solicitacao.trilha_aceita">
             {{ solicitacao.trilhas_candidatas.length }} trilha(s) candidata(s) avaliadas.
           </p>
+
+          <div
+            class="chamado-editor"
+            *ngIf="solicitacao.chamado && solicitacao.chamado.status === 'ABERTO'"
+          >
+            <div class="chamado-editor__header">
+              <div>
+                <strong>Chamado aberto para a COMGRAD</strong>
+                <p>{{ solicitacao.chamado.assunto }}</p>
+              </div>
+              <span class="status-badge status-badge--pending">Aberto</span>
+            </div>
+
+            <div class="form-actions form-actions--start" *ngIf="podeAdicionarDescricao(solicitacao)">
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="abrirEditorChamado(solicitacao.chamado.id)"
+              >
+                Editar descrição
+              </button>
+            </div>
+
+            <ng-container *ngIf="exibirEditorChamado(solicitacao)">
+              <label class="chamado-editor__label" [for]="'chamado-' + solicitacao.chamado.id">
+                Mensagem do chamado
+              </label>
+              <textarea
+                class="chamado-editor__textarea"
+                [id]="'chamado-' + solicitacao.chamado.id"
+                [value]="mensagensChamado[solicitacao.chamado.id]"
+                (input)="atualizarMensagemChamado(solicitacao.chamado.id, $any($event.target).value)"
+                rows="5"
+              ></textarea>
+
+              <p class="field-help">
+                Use este campo para explicar por que as trilhas sugeridas não atendem ao seu caso.
+              </p>
+              <p class="field-error" *ngIf="errosChamado[solicitacao.chamado.id]">
+                {{ errosChamado[solicitacao.chamado.id] }}
+              </p>
+
+              <div class="form-actions">
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  (click)="salvarMensagemChamado(solicitacao)"
+                  [disabled]="salvandoChamadoId === solicitacao.chamado.id"
+                >
+                  {{ salvandoChamadoId === solicitacao.chamado.id ? 'Salvando...' : 'Salvar chamado' }}
+                </button>
+              </div>
+            </ng-container>
+          </div>
         </article>
       </div>
     </section>

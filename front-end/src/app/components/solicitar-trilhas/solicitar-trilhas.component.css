@@ -211,6 +211,45 @@
   margin-top: 8px;
 }
 
+.chamado-editor {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid rgba(20, 61, 118, 0.12);
+  border-radius: 18px;
+  background: #f9fbfe;
+}
+
+.chamado-editor__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.chamado-editor__header strong,
+.chamado-editor__label {
+  color: var(--primary-dark);
+}
+
+.chamado-editor__label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.chamado-editor__textarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 61, 118, 0.18);
+  border-radius: 14px;
+  resize: vertical;
+  font: inherit;
+  color: var(--text-color);
+  background: #ffffff;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -221,6 +260,10 @@
 .form-actions--split {
   justify-content: space-between;
   align-items: center;
+}
+
+.form-actions--start {
+  justify-content: flex-start;
 }
 
 .btn-primary,

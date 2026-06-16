@@ -9,10 +9,9 @@ import { GerenciarTrilhasComponent } from './components/gerenciar-trilhas/gerenc
 import { SolicitarTrilhasComponent } from './components/solicitar-trilhas/solicitar-trilhas.component';
 import { CurriculoVigenteComponent } from './components/curriculo-vigente/curriculo-vigente.component';
 import { SugerirTrilhasComponent } from './components/sugerir-trilhas/sugerir-trilhas.component';
-
-import { ChamadoComgradComponent } from './components/chamado-comgrad/chamado-comgrad.component';
+import { GerenciarUsuariosComponent } from './components/gerenciar-usuarios/gerenciar-usuarios.component';
 import { ComgradPainelComponent } from './components/comgrad-painel/comgrad-painel.component';
-import { RelatorioTrilhasComponent } from './components/relatorio-trilhas/relatorio-trilhas.component';
+import { RelatoriosComponent } from './components/relatorios/relatorios.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -38,12 +37,6 @@ const routes: Routes = [
     data: { title: 'Sugerir novas trilhas' },
   },
   {
-    path: 'chamado-comgrad',
-    component: ChamadoComgradComponent,
-    canActivate: [AuthGuard],
-    data: { title: 'Abrir chamado com a COMGRAD' },
-  },
-  {
     path: 'comgrad/painel',
     component: ComgradPainelComponent,
     canActivate: [AuthGuard],
@@ -56,6 +49,12 @@ const routes: Routes = [
     data: { title: 'Gerenciar trilhas', roles: ['COMGRAD'] },
   },
   {
+    path: 'gerenciar-usuarios',
+    component: GerenciarUsuariosComponent,
+    canActivate: [AuthGuard],
+    data: { title: 'Gerenciar usuários' },
+  },
+  {
     path: 'chamados',
     component: NotImplementedComponent,
     canActivate: [AuthGuard],
@@ -63,7 +62,7 @@ const routes: Routes = [
   },
   {
     path: 'relatorios',
-    component: RelatorioTrilhasComponent,
+    component: RelatoriosComponent,
     canActivate: [AuthGuard],
     data: { title: 'Relatórios', roles: ['COMGRAD', 'ADMIN'] },
   },

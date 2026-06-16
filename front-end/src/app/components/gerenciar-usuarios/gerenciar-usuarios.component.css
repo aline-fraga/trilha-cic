@@ -1,0 +1,294 @@
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.hero__top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero h1 {
+  margin: 0;
+  color: var(--primary-dark);
+}
+
+.hero p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+.usuarios-panel {
+  max-width: none;
+  margin-top: 0;
+}
+
+.filtros-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filtros-bar .form-control {
+  max-width: 220px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.tabela th,
+.tabela td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tabela th {
+  background: #f8fafc;
+  color: var(--primary-dark);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e8f0fb;
+  color: #1558a6;
+  border: 1px solid #c9ddfa;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pill--role {
+  background: #edf4ff;
+}
+
+.pill--inactive {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #dbe4ee;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  z-index: 40;
+}
+
+.painel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 41;
+  width: min(460px, 100%);
+  height: 100vh;
+  padding: 24px;
+  overflow-y: auto;
+  background: #ffffff;
+  box-shadow: -10px 0 30px rgba(15, 23, 42, 0.12);
+}
+
+.painel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.painel__header h3 {
+  margin: 0;
+  color: var(--primary-dark);
+}
+
+.painel__header p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.btn--fechar {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.form-hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font: inherit;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(20, 61, 118, 0.12);
+  background: #ffffff;
+}
+
+.checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.aluno-grid {
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.field-error {
+  color: #b91c1c;
+  font-size: 0.82rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-blue));
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #d7e0ea;
+}
+
+.btn-danger {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+.btn-primary[disabled],
+.btn-secondary[disabled],
+.btn-danger[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+
+.alert--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.loading-state {
+  text-align: center;
+  color: #64748b;
+  padding: 24px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+}
+
+@media (max-width: 768px) {
+  .page-shell {
+    padding: 16px;
+  }
+
+  .hero__top,
+  .filtros-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtros-bar .form-control {
+    max-width: none;
+  }
+
+  .painel {
+    width: 100%;
+    padding: 20px 16px;
+  }
+
+  .form-actions,
+  .acoes {
+    flex-direction: column;
+  }
+}
