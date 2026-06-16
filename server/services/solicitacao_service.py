@@ -50,6 +50,14 @@ class SolicitacaoService:
     def solicitar(
         self, aluno_id: int, respostas: list[RespostaPerguntaInput]
     ) -> Solicitacao:
+        if self.chamado_service.existe_aberto_para_aluno(aluno_id):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Aluno já possui um chamado em aberto. "
+                    "Aguarde a resposta da COMGRAD antes de solicitar nova trilha."
+                ),
+            )
         if self.solicitacao_repo.existe_pendente_para_aluno(aluno_id):
             raise HTTPException(
                 status_code=400,

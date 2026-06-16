@@ -20,6 +20,7 @@
   <div *ngIf="carregando" class="loading-state">Carregando formulário...</div>
 
   <ng-container *ngIf="!carregando">
+    <div class="alert alert--success" *ngIf="mensagemSucesso">{{ mensagemSucesso }}</div>
     <div class="alert alert--error" *ngIf="erroGeral">{{ erroGeral }}</div>
 
     <section class="status-panel" *ngIf="possuiChamadoAberto">
@@ -28,7 +29,7 @@
         <h2>Você já possui um chamado aberto de sugestão de nova trilha</h2>
         <p>
           O backend permite apenas um chamado aberto do tipo nova trilha por aluno.
-          Você ainda pode consultar o histórico abaixo.
+          Você ainda pode editar a mensagem desse chamado no histórico abaixo.
         </p>
       </div>
     </section>
@@ -160,6 +161,39 @@
               {{ disciplina.codigo }} - {{ disciplina.nome }}
             </li>
           </ul>
+
+          <div
+            class="chamado-editor"
+            *ngIf="sugestao.chamado.status === 'ABERTO'"
+          >
+            <label class="chamado-editor__label" [for]="'sugestao-chamado-' + sugestao.chamado.id">
+              Mensagem do chamado
+            </label>
+            <textarea
+              class="chamado-editor__textarea"
+              [id]="'sugestao-chamado-' + sugestao.chamado.id"
+              [value]="mensagensChamado[sugestao.chamado.id]"
+              (input)="atualizarMensagemChamado(sugestao.chamado.id, $any($event.target).value)"
+              rows="5"
+            ></textarea>
+            <p class="field-help">
+              Acrescente contexto sobre a nova trilha proposta para ajudar a análise da COMGRAD.
+            </p>
+            <p class="field-error" *ngIf="errosChamado[sugestao.chamado.id]">
+              {{ errosChamado[sugestao.chamado.id] }}
+            </p>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="salvarMensagemChamado(sugestao)"
+                [disabled]="salvandoChamadoId === sugestao.chamado.id"
+              >
+                {{ salvandoChamadoId === sugestao.chamado.id ? 'Salvando...' : 'Salvar chamado' }}
+              </button>
+            </div>
+          </div>
         </article>
       </div>
     </section>
@@ -181,7 +215,8 @@
     <span class="status-badge status-badge--accepted">Enviado</span>
     <h2 id="confirmacao-sugestao-titulo">Sugestão enviada com sucesso</h2>
     <p>
-      Sua sugestão foi registrada e encaminhada para avaliação da COMGRAD.
+      Sua sugestão foi registrada e encaminhada para avaliação da COMGRAD. Se
+      necessário, edite a mensagem do chamado no histórico logo abaixo.
     </p>
 
     <dl class="confirm-modal__summary">

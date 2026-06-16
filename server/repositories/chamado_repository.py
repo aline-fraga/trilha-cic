@@ -30,3 +30,14 @@ class ChamadoRepository:
     def buscar(self, chamado_id: int) -> Chamado | None:
         stmt = select(Chamado).where(Chamado.id == chamado_id)
         return self.db.scalars(stmt).one_or_none()
+
+    def existe_aberto_para_aluno(
+        self, aluno_id: int, tipo: ChamadoTipo | None = None
+    ) -> bool:
+        stmt = select(Chamado.id).where(
+            Chamado.aluno_id == aluno_id,
+            Chamado.status == ChamadoStatus.ABERTO,
+        )
+        if tipo is not None:
+            stmt = stmt.where(Chamado.tipo == tipo)
+        return self.db.scalars(stmt).first() is not None

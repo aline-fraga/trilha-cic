@@ -279,6 +279,29 @@
   margin-top: 6px;
 }
 
+.chamado-editor {
+  padding-top: 4px;
+}
+
+.chamado-editor__label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.chamado-editor__textarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 61, 118, 0.18);
+  border-radius: 14px;
+  resize: vertical;
+  font: inherit;
+  color: var(--text-color);
+  background: #ffffff;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

@@ -22,11 +22,11 @@ class ChamadoService:
             raise HTTPException(status_code=404, detail="Chamado não encontrado.")
         return chamado
 
+    def existe_aberto_para_aluno(self, aluno_id: int) -> bool:
+        return self.chamado_repo.existe_aberto_para_aluno(aluno_id)
+
     def criar(self, dados: ChamadoCreate, aluno_id: int):
-        chamados_abertos = self.chamado_repo.listar(status=ChamadoStatus.ABERTO.value)
-        if any(
-            c.aluno_id == aluno_id and c.tipo == dados.tipo for c in chamados_abertos
-        ):
+        if self.chamado_repo.existe_aberto_para_aluno(aluno_id, dados.tipo):
             detalhe_tipo = (
                 "para sugestão de trilha"
                 if dados.tipo.value == "NOVA_TRILHA"

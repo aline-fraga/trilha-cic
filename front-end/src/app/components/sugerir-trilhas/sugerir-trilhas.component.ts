@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Disciplina } from '../../models/disciplina';
 import { SugestaoTrilhaResponse } from '../../models/sugestao-trilha';
+import { ChamadoService } from '../../services/chamado.service';
 import { DisciplinaService } from '../../services/disciplina.service';
 import { SugestoesTrilhaService } from '../../services/sugestoes-trilha.service';
 
@@ -23,12 +24,16 @@ export class SugerirTrilhasComponent implements OnInit {
 
   carregando = true;
   enviando = false;
+  salvandoChamadoId: number | null = null;
   erroGeral = '';
   mensagemSucesso = '';
   erros: Record<string, string> = {};
+  errosChamado: Record<number, string> = {};
+  mensagensChamado: Record<number, string> = {};
 
   constructor(
     private readonly fb: FormBuilder,
+    private readonly chamadoService: ChamadoService,
     private readonly disciplinaService: DisciplinaService,
     private readonly sugestoesTrilhaService: SugestoesTrilhaService
   ) {}
@@ -83,6 +88,7 @@ export class SugerirTrilhasComponent implements OnInit {
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
+        this.sincronizarMensagensChamado();
         this.carregando = false;
       },
       error: () => {
@@ -143,6 +149,7 @@ export class SugerirTrilhasComponent implements OnInit {
         next: (sugestao) => {
           this.enviando = false;
           this.sugestoes = [sugestao, ...this.sugestoes];
+          this.sincronizarMensagensChamado();
           this.sugestaoConfirmada = sugestao;
           this.form.reset({ nome: '', disciplinas_ids: [] });
           this.filtroDisciplina = '';
@@ -201,6 +208,45 @@ export class SugerirTrilhasComponent implements OnInit {
     return status === 'FECHADO' ? 'Fechado' : 'Aberto';
   }
 
+  atualizarMensagemChamado(chamadoId: number, mensagem: string): void {
+    this.mensagensChamado[chamadoId] = mensagem;
+    delete this.errosChamado[chamadoId];
+    this.erroGeral = '';
+    this.mensagemSucesso = '';
+  }
+
+  salvarMensagemChamado(sugestao: SugestaoTrilhaResponse): void {
+    const mensagem = (this.mensagensChamado[sugestao.chamado.id] ?? sugestao.chamado.mensagem).trim();
+    if (!mensagem) {
+      this.errosChamado[sugestao.chamado.id] = 'Informe uma mensagem para o chamado.';
+      return;
+    }
+
+    this.salvandoChamadoId = sugestao.chamado.id;
+    delete this.errosChamado[sugestao.chamado.id];
+    this.erroGeral = '';
+    this.mensagemSucesso = '';
+
+    this.chamadoService.editarMensagem(sugestao.chamado.id, mensagem).subscribe({
+      next: (chamadoAtualizado) => {
+        this.salvandoChamadoId = null;
+        this.mensagensChamado[sugestao.chamado.id] = chamadoAtualizado.mensagem;
+        this.sugestoes = this.sugestoes.map((item) =>
+          item.id === sugestao.id ? { ...item, chamado: chamadoAtualizado } : item
+        );
+        if (this.sugestaoConfirmada?.id === sugestao.id) {
+          this.sugestaoConfirmada = { ...this.sugestaoConfirmada, chamado: chamadoAtualizado };
+        }
+        this.mensagemSucesso = 'Chamado atualizado com sucesso.';
+      },
+      error: (err) => {
+        this.salvandoChamadoId = null;
+        this.errosChamado[sugestao.chamado.id] =
+          err?.error?.detail ?? 'Erro ao atualizar a mensagem do chamado.';
+      },
+    });
+  }
+
   private aplicarErroBackend(err: any): void {
     const detail = err?.error?.detail;
 
@@ -245,6 +291,17 @@ export class SugerirTrilhasComponent implements OnInit {
   private abrirModalErro(titulo: string, mensagem: string): void {
     this.erroModalTitulo = titulo;
     this.erroModalMensagem = mensagem;
+  }
+
+  private sincronizarMensagensChamado(): void {
+    const mensagensAtualizadas: Record<number, string> = {};
+
+    this.sugestoes.forEach((sugestao) => {
+      mensagensAtualizadas[sugestao.chamado.id] =
+        this.mensagensChamado[sugestao.chamado.id] ?? sugestao.chamado.mensagem;
+    });
+
+    this.mensagensChamado = mensagensAtualizadas;
   }
 
   private montarMensagemValidacao(): string {
