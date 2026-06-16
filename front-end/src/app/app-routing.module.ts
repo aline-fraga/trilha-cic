@@ -53,7 +53,7 @@ const routes: Routes = [
     path: 'gerenciar-trilhas',
     component: GerenciarTrilhasComponent,
     canActivate: [AuthGuard],
-    data: { title: 'Gerenciar trilhas' },
+    data: { title: 'Gerenciar trilhas', roles: ['COMGRAD'] },
   },
   {
     path: 'chamados',

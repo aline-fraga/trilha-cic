@@ -114,13 +114,26 @@
           [(ngModel)]="novoChamado.mensagem"
           placeholder="Descreva o contexto da sua solicitação em detalhes..."
           rows="6"
+          [minlength]="comentarioMin"
+          [maxlength]="comentarioMax"
           required
         ></textarea>
+        <small
+          class="char-count"
+          [class.char-count--invalid]="!mensagemValida"
+        >
+          {{ novoChamado.mensagem.length }}/{{ comentarioMax }} caracteres
+          (mínimo {{ comentarioMin }})
+        </small>
       </div>
 
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="voltarParaLista()">Cancelar</button>
-        <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isSubmitting || !mensagemValida"
+        >
           {{ isSubmitting ? 'Enviando...' : 'Enviar Chamado' }}
         </button>
       </div>

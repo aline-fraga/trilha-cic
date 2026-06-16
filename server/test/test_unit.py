@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from server.schemas.chamado import AbrirChamadoRequest
 from server.schemas.sugestao_trilha import SugestaoTrilhaCreate
 
 LIMITE_MAXIMO_DISCIPLINAS = 4
@@ -34,3 +35,29 @@ class TestRNF10NomeSugestao:
     def test_rejeita_nome_acima_de_150_caracteres(self):
         with pytest.raises(ValidationError):
             SugestaoTrilhaCreate(nome="a" * 151, disciplinas_ids=[1])
+
+
+class TestRNF12LimiteComentarioChamado:
+    """RNF #12 (UC07): comentário do chamado deve ter entre 50 e 2000 chars.
+
+    A regra vive em `AbrirChamadoRequest` (corpo do POST /chamados), não no
+    `ChamadoCreate` compartilhado — então os chamados automáticos não são afetados.
+    """
+
+    BASE = {"assunto": "Revisão de trilha", "tipo": "TRILHA_REJEITADA"}
+
+    def test_aceita_limite_inferior_50(self):
+        req = AbrirChamadoRequest(**self.BASE, mensagem="a" * 50)
+        assert len(req.mensagem) == 50
+
+    def test_aceita_limite_superior_2000(self):
+        req = AbrirChamadoRequest(**self.BASE, mensagem="a" * 2000)
+        assert len(req.mensagem) == 2000
+
+    def test_rejeita_abaixo_de_50(self):
+        with pytest.raises(ValidationError):
+            AbrirChamadoRequest(**self.BASE, mensagem="a" * 49)
+
+    def test_rejeita_acima_de_2000(self):
+        with pytest.raises(ValidationError):
+            AbrirChamadoRequest(**self.BASE, mensagem="a" * 2001)

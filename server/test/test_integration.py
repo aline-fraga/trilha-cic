@@ -75,8 +75,9 @@ class TestRNF1EdicaoExclusivaComgrad:
 
 class TestRNF4SoftDeleteTrilha:
     def test_exclusao_marca_inativa_e_preserva_registro(
-        self, client, db_session
+        self, client, db_session, criar_usuario, auth_header
     ):
+        comgrad = criar_usuario(UserRole.COMGRAD)
         disciplina = _nova_disciplina(db_session, "INF01202")
         trilha = Trilha(
             nome="Sistemas de Computação",
@@ -88,7 +89,9 @@ class TestRNF4SoftDeleteTrilha:
         db_session.refresh(trilha)
         trilha_id = trilha.id
 
-        resp = client.delete(f"/trilhas/delete/{trilha_id}")
+        resp = client.delete(
+            f"/trilhas/delete/{trilha_id}", headers=auth_header(comgrad)
+        )
         assert resp.status_code == 204
 
         # O registro continua no banco, apenas inativado (exclusão lógica).
@@ -96,7 +99,10 @@ class TestRNF4SoftDeleteTrilha:
         assert persistida is not None
         assert persistida.is_active is False
 
-    def test_trilha_inativa_some_da_listagem(self, client, db_session):
+    def test_trilha_inativa_some_da_listagem(
+        self, client, db_session, criar_usuario, auth_header
+    ):
+        comgrad = criar_usuario(UserRole.COMGRAD)
         disciplina = _nova_disciplina(db_session, "INF01203")
         trilha = Trilha(
             nome="Trilha Removível",
@@ -108,7 +114,9 @@ class TestRNF4SoftDeleteTrilha:
         db_session.refresh(trilha)
         trilha_id = trilha.id
 
-        client.delete(f"/trilhas/delete/{trilha_id}")
+        client.delete(
+            f"/trilhas/delete/{trilha_id}", headers=auth_header(comgrad)
+        )
 
         listadas = client.get("/trilhas/get").json()
         assert all(t["id"] != trilha_id for t in listadas)
@@ -164,3 +172,63 @@ class TestRNF11AutofillChamado:
         assert corpo["aluno_id"] == aluno.id  # associado pelo token, não pelo cliente
         assert corpo["status"] == "ABERTO"
         assert corpo["created_at"]  # data/hora preenchida automaticamente
+
+
+class TestRNF3EdicaoTrilhaExclusivaComgrad:
+    """RNF #3 (UC02) — só a COMGRAD edita/exclui trilhas; ALUNO/ADMIN são barrados.
+
+    O caso positivo (COMGRAD exclui com sucesso) é coberto por
+    TestRNF4SoftDeleteTrilha. Aqui validamos o bloqueio das rotas de escrita —
+    o `require_roles` roda antes da lógica, então o id inexistente não importa.
+    """
+
+    def test_aluno_nao_pode_excluir_trilha(self, client, criar_usuario, auth_header):
+        aluno = criar_usuario(UserRole.ALUNO)
+        resp = client.delete("/trilhas/delete/1", headers=auth_header(aluno))
+        assert resp.status_code == 403
+
+    def test_admin_nao_pode_excluir_trilha(self, client, criar_usuario, auth_header):
+        admin = criar_usuario(UserRole.ADMIN)
+        resp = client.delete("/trilhas/delete/1", headers=auth_header(admin))
+        assert resp.status_code == 403
+
+    def test_aluno_nao_pode_editar_trilha(self, client, criar_usuario, auth_header):
+        aluno = criar_usuario(UserRole.ALUNO)
+        resp = client.patch(
+            "/trilhas/update/1", json={"nome": "x"}, headers=auth_header(aluno)
+        )
+        assert resp.status_code == 403
+
+    def test_sem_token_nao_pode_excluir_trilha(self, client):
+        resp = client.delete("/trilhas/delete/1")
+        assert resp.status_code in (401, 403)
+
+
+class TestRNF12ComentarioChamadoLimite:
+    """RNF #12 (UC07): POST /chamados exige comentário entre 50 e 2000 chars."""
+
+    def test_comentario_curto_e_rejeitado(self, client, criar_usuario, auth_header):
+        aluno = criar_usuario(UserRole.ALUNO)
+        resp = client.post(
+            "/chamados",
+            json={
+                "assunto": "Revisão de trilha",
+                "mensagem": "curto",
+                "tipo": "TRILHA_REJEITADA",
+            },
+            headers=auth_header(aluno),
+        )
+        assert resp.status_code == 422
+
+    def test_comentario_valido_e_aceito(self, client, criar_usuario, auth_header):
+        aluno = criar_usuario(UserRole.ALUNO)
+        resp = client.post(
+            "/chamados",
+            json={
+                "assunto": "Revisão de trilha",
+                "mensagem": "a" * 50,
+                "tipo": "TRILHA_REJEITADA",
+            },
+            headers=auth_header(aluno),
+        )
+        assert resp.status_code == 201

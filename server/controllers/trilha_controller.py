@@ -2,14 +2,23 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from server.database import get_db
-from server.schemas.responses import BAD_REQUEST_400, NOT_FOUND_404
+from server.models.enums import UserRole
+from server.schemas.responses import (
+    BAD_REQUEST_400,
+    FORBIDDEN_403,
+    NOT_FOUND_404,
+    UNAUTHORIZED_401,
+)
 from server.schemas.trilha import TrilhaCreate, TrilhaResponse, TrilhaUpdate
+from server.services.auth_service import require_roles
 from server.services.trilha_service import TrilhaService
 
 
 class TrilhaController:
     def __init__(self):
         self.router = APIRouter(prefix="/trilhas", tags=["trilhas"])
+        comgrad_only = [require_roles(UserRole.COMGRAD)]
+        comgrad_errors = {401: UNAUTHORIZED_401, 403: FORBIDDEN_403}
         self.router.add_api_route(
             "/get",
             self.get_trilhas,
@@ -29,6 +38,7 @@ class TrilhaController:
             methods=["POST"],
             response_model=TrilhaResponse,
             status_code=status.HTTP_201_CREATED,
+            dependencies=comgrad_only,
             summary="Cadastrar nova trilha",
             description=(
                 "Cria uma trilha acadêmica nova com nome, resumo, lista de "
@@ -42,13 +52,14 @@ class TrilhaController:
                 "sistema, o cadastro é bloqueado.\n"
                 "- Cada `peso` está no intervalo `[0.0, 1.0]`."
             ),
-            responses={400: BAD_REQUEST_400},
+            responses={**comgrad_errors, 400: BAD_REQUEST_400},
         )
         self.router.add_api_route(
             "/update/{trilha_id}",
             self.editar_trilha,
             methods=["PATCH"],
             response_model=TrilhaResponse,
+            dependencies=comgrad_only,
             summary="Editar trilha existente",
             description=(
                 "Atualização parcial: apenas os campos enviados são alterados.\n\n"
@@ -57,19 +68,20 @@ class TrilhaController:
                 "(mesma regra do cadastro). Quando omitido, os pesos atuais ficam "
                 "intactos."
             ),
-            responses={400: BAD_REQUEST_400, 404: NOT_FOUND_404},
+            responses={**comgrad_errors, 400: BAD_REQUEST_400, 404: NOT_FOUND_404},
         )
         self.router.add_api_route(
             "/delete/{trilha_id}",
             self.excluir_trilha,
             methods=["DELETE"],
             status_code=status.HTTP_204_NO_CONTENT,
+            dependencies=comgrad_only,
             summary="Excluir trilha (soft delete)",
             description=(
                 "Marca a trilha como inativa (`is_active=false`). Os dados ficam "
                 "preservados no banco para manter histórico de aceites/rejeições."
             ),
-            responses={404: NOT_FOUND_404},
+            responses={**comgrad_errors, 404: NOT_FOUND_404},
         )
 
     def get_trilhas(
