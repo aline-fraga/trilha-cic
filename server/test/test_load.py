@@ -40,9 +40,11 @@ import random
 import uuid
 
 from locust import HttpUser, between, task
+from locust.exception import StopUser
 
 LIMITE_VALIDACAO_S = 2.0
 LIMITE_SUGESTAO_S = 5.0
+LOGIN_TENTATIVAS = 5
 
 # Credenciais do seed.py (ajustáveis por variável de ambiente).
 EMAIL_COMGRAD = os.getenv("LOAD_EMAIL_COMGRAD", "comgrad@ufrgs.br")
@@ -61,14 +63,25 @@ class _UsuarioAutenticado(HttpUser):
     senha = ""
 
     def on_start(self) -> None:
+        # Login com retry: conexões recusadas no cold-start do servidor (rajada
+        # de logins com bcrypt) são transitórias e NÃO devem abortar a corrida.
+        # As tentativas usam catch_response p/ não poluir as estatísticas; se
+        # todas falharem, para apenas este usuário (StopUser), não o teste todo.
         self.headers = {}
-        resp = self.client.post(
-            "/auth/login", json={"email": self.email, "password": self.senha}
-        )
-        if resp.status_code == 200:
-            self.headers = {"Authorization": f"Bearer {resp.json()['access_token']}"}
-        else:
-            self.environment.runner.quit()
+        for _ in range(LOGIN_TENTATIVAS):
+            with self.client.post(
+                "/auth/login",
+                json={"email": self.email, "password": self.senha},
+                catch_response=True,
+                name="/auth/login",
+            ) as resp:
+                if resp.status_code == 200:
+                    token = resp.json()["access_token"]
+                    self.headers = {"Authorization": f"Bearer {token}"}
+                    resp.success()
+                    return
+                resp.success()  # tentativa transitória: não conta como falha
+        raise StopUser()
 
     def _medir(self, method: str, url: str, limite_s: float, **kwargs) -> None:
         with self.client.request(

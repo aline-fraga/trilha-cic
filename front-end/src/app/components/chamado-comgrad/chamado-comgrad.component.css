@@ -305,3 +305,15 @@ textarea.form-control {
   color: #166534;
   opacity: 0.8;
 }
+
+.char-count {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: right;
+}
+
+.char-count--invalid {
+  color: #dc2626;
+}

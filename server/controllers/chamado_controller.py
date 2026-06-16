@@ -5,6 +5,7 @@ from server.database import get_db
 from server.models.enums import UserRole
 from server.models.user import User
 from server.schemas.chamado import (
+    AbrirChamadoRequest,
     ChamadoCreate,
     ChamadoEditMensagem,
     ChamadoResponder,
@@ -40,7 +41,8 @@ class ChamadoController:
                 "- O aluno só pode ter **um chamado em aberto por tipo** "
                 "(`TRILHA_REJEITADA` ou `NOVA_TRILHA`); tentar abrir um segundo "
                 "do mesmo tipo retorna 400.\n"
-                "- `mensagem` não pode ser vazia (após `strip`)."
+                "- `mensagem` deve ter entre **50 e 2000 caracteres** "
+                "(RNF #12); fora disso retorna 422."
             ),
             responses={
                 400: BAD_REQUEST_400,
@@ -117,14 +119,17 @@ class ChamadoController:
 
     def abrir_chamado(
         self,
-        dados: ChamadoCreate,
+        dados: AbrirChamadoRequest,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user),
     ):
         service = ChamadoService(db)
         user_service = UserService(db)
 
-        c = service.criar(dados, current_user.id)
+        chamado_create = ChamadoCreate(
+            assunto=dados.assunto, mensagem=dados.mensagem, tipo=dados.tipo
+        )
+        c = service.criar(chamado_create, current_user.id)
         aluno = user_service.obter(c.aluno_id)
 
         c_dict = {

@@ -27,6 +27,15 @@ export class ChamadoComgradComponent implements OnInit {
   successMessage = '';
   errorMessage = '';
 
+  // RNF #12: o comentário do chamado deve ter entre 50 e 2000 caracteres.
+  readonly comentarioMin = 50;
+  readonly comentarioMax = 2000;
+
+  get mensagemValida(): boolean {
+    const tamanho = this.novoChamado.mensagem.trim().length;
+    return tamanho >= this.comentarioMin && tamanho <= this.comentarioMax;
+  }
+
   constructor(
     private chamadoService: ChamadoService,
     private router: Router
@@ -75,8 +84,13 @@ export class ChamadoComgradComponent implements OnInit {
   }
 
   submitChamado(): void {
-    if (!this.novoChamado.assunto || !this.novoChamado.mensagem) {
-      this.errorMessage = 'Por favor, preencha o título e a mensagem do chamado.';
+    if (!this.novoChamado.assunto.trim()) {
+      this.errorMessage = 'Por favor, preencha o título do chamado.';
+      return;
+    }
+    if (!this.mensagemValida) {
+      this.errorMessage =
+        `O comentário deve ter entre ${this.comentarioMin} e ${this.comentarioMax} caracteres.`;
       return;
     }
 
