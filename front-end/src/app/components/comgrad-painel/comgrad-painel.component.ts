@@ -11,12 +11,12 @@ import { ChamadoService, Chamado } from '../../services/chamado.service';
   styleUrl: './comgrad-painel.component.css'
 })
 export class ComgradPainelComponent implements OnInit {
-  
   chamados: Chamado[] = [];
   isLoading = true;
-  
+
   chamadoSelecionado: Chamado | null = null;
-  respostaTexto: string = '';
+  respostaTexto = '';
+  erroResposta = '';
   isSubmitting = false;
 
   termoBusca: string = '';
@@ -80,20 +80,30 @@ export class ComgradPainelComponent implements OnInit {
   selecionarChamado(chamado: Chamado): void {
     this.chamadoSelecionado = chamado;
     this.respostaTexto = '';
+    this.erroResposta = '';
   }
 
   voltarParaLista(): void {
     this.chamadoSelecionado = null;
     this.respostaTexto = '';
+    this.erroResposta = '';
   }
 
   enviarResposta(): void {
     if (!this.chamadoSelecionado) return;
 
-    this.isSubmitting = true;
-    const respostaPadrao = this.respostaTexto.trim() || 'Chamado analisado e encerrado pela coordenação.';
+    const resposta = this.respostaTexto.trim();
+    if (!resposta) {
+      this.erroResposta = 'Informe uma mensagem antes de encerrar o chamado.';
+      return;
+    }
 
-    this.chamadoService.responderChamado(this.chamadoSelecionado.id, respostaPadrao).subscribe({
+    this.erroResposta = '';
+    this.isSubmitting = true;
+
+    this.chamadoService
+      .responderChamado(this.chamadoSelecionado.id, resposta)
+      .subscribe({
       next: () => {
         this.isSubmitting = false;
         this.carregarChamados();

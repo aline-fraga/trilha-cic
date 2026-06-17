@@ -57,7 +57,21 @@ class ChamadoService:
     def atualizar(self, id: int, resposta: str, respondido_por_id: int):
         chamado = self.buscar(id)
 
-        chamado.resposta = resposta
+        if chamado.status != ChamadoStatus.ABERTO:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Apenas chamados em ABERTO podem ser respondidos — "
+                    f"status atual: {chamado.status.value}."
+                ),
+            )
+
+        if not resposta.strip():
+            raise HTTPException(
+                status_code=400, detail="A resposta não pode estar em branco."
+            )
+
+        chamado.resposta = resposta.strip()
         chamado.status = ChamadoStatus.FECHADO
         chamado.respondido_por_id = respondido_por_id
 

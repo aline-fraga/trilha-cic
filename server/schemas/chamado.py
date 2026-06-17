@@ -43,7 +43,18 @@ class AbrirChamadoRequest(BaseModel):
     )
 
 class ChamadoResponder(BaseModel):
-    resposta: str
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "resposta": (
+                    "Analisamos a solicitação e orientamos o aluno a revisar as "
+                    "disciplinas optativas antes de reenviar o pedido."
+                )
+            }
+        }
+    )
+
+    resposta: str = Field(min_length=1)
 
 
 class ChamadoEditMensagem(BaseModel):
@@ -75,4 +86,3 @@ class ChamadoResponse(ChamadoCreate):
     resposta: str | None = None
     respondido_em: datetime | None = None
     trilha_id: int | None = None
-

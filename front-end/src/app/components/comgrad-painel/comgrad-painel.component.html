@@ -65,6 +65,21 @@
         <p>{{ chamadoSelecionado.mensagem }}</p>
       </div>
 
+      <div class="form-group" *ngIf="chamadoSelecionado.status === 'ABERTO'">
+        <label class="form-label" for="resposta-chamado">Mensagem de resposta</label>
+        <p class="form-hint">
+          Essa mensagem será registrada no chamado antes do encerramento.
+        </p>
+        <textarea
+          id="resposta-chamado"
+          class="form-control"
+          rows="6"
+          [(ngModel)]="respostaTexto"
+          placeholder="Descreva a orientação ou o retorno da COMGRAD para o aluno."
+        ></textarea>
+        <div class="alert alert--error" *ngIf="erroResposta">{{ erroResposta }}</div>
+      </div>
+
       <div class="detalhes-box detalhes-box--resposta" *ngIf="chamadoSelecionado.status === 'FECHADO'">
         <h4>Resposta da COMGRAD:</h4>
         <p>{{ chamadoSelecionado.resposta }}</p>

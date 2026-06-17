@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from server.schemas.chamado import AbrirChamadoRequest
+from server.schemas.chamado import AbrirChamadoRequest, ChamadoResponder
 from server.schemas.sugestao_trilha import SugestaoTrilhaCreate
 
 LIMITE_MAXIMO_DISCIPLINAS = 4
@@ -61,3 +61,13 @@ class TestRNF12LimiteComentarioChamado:
     def test_rejeita_acima_de_2000(self):
         with pytest.raises(ValidationError):
             AbrirChamadoRequest(**self.BASE, mensagem="a" * 2001)
+
+
+class TestRespostaChamado:
+    def test_aceita_resposta_nao_vazia(self):
+        req = ChamadoResponder(resposta="Solicitação analisada e respondida.")
+        assert req.resposta == "Solicitação analisada e respondida."
+
+    def test_rejeita_resposta_vazia(self):
+        with pytest.raises(ValidationError):
+            ChamadoResponder(resposta="")

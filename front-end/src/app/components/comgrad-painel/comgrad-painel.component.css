@@ -161,6 +161,10 @@ textarea.form-control {
   font-weight: 500;
 }
 
+.form-group .alert {
+  margin-bottom: 0;
+}
+
 .alert--success {
   background: #ecfdf5;
   color: #065f46;
